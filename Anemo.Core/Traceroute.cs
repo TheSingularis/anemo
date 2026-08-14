@@ -5,7 +5,7 @@ using System.Net.NetworkInformation;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace NetworkWidget
+namespace Anemo.Core
 {
     public class HopResult : INotifyPropertyChanged
     {
@@ -27,7 +27,7 @@ namespace NetworkWidget
     // Mirrors classic tracert.exe behavior (increasing TTL, one probe per hop) using
     // .NET's own Ping class rather than shelling out, matching how Gateway/1.1.1.1
     // pings already work elsewhere in this app.
-    internal static class Traceroute
+    public static class Traceroute
     {
         public static async Task RunAsync(
             string target,

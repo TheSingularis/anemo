@@ -3,12 +3,12 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
 
-namespace NetworkWidget
+namespace Anemo.Core
 {
     // WindowStyle="None" gives a fully custom title bar, but it also means Windows 11's
     // automatic corner rounding and dark-mode chrome no longer apply on their own - only
     // DWM can restore those, via these attributes (22000+; silently no-ops on older builds).
-    internal static class DwmHelper
+    public static class DwmHelper
     {
         [DllImport("dwmapi.dll")]
         private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);

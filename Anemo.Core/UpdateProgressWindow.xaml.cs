@@ -1,14 +1,17 @@
 using System.Windows;
 
-namespace NetworkWidget
+namespace Anemo.Core
 {
     public partial class UpdateProgressWindow : Window
     {
         private bool _closed;
 
-        public UpdateProgressWindow()
+        public UpdateProgressWindow(string appName = "Anemo")
         {
             InitializeComponent();
+
+            Title = appName;
+            txtTitleBar.Text = appName;
 
             SourceInitialized += (_, _) => DwmHelper.ApplyDarkRoundedStyling(this);
             Closed += (_, _) => _closed = true;
