@@ -7,7 +7,13 @@
         WindowStartupLocation="CenterScreen" Background="#202020"
         FontFamily="Segoe UI Variable Text, Segoe UI">
     <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/NetworkWidget.Core;component/Styles/DarkScrollBar.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
         <SolidColorBrush x:Key="AccentBrush" Color="#3A7EE0"/>
+        <SolidColorBrush x:Key="AccentSoftBrush" Color="#3A7EE0" Opacity="0.12"/>
         <SolidColorBrush x:Key="GoodBrush" Color="#5CB85C"/>
         <SolidColorBrush x:Key="BadBrush" Color="#D9534F"/>
 
@@ -164,6 +170,7 @@
             <Setter Property="Foreground" Value="#DDDDDD"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
+        </ResourceDictionary>
     </Window.Resources>
 
     <shell:WindowChrome.WindowChrome>
@@ -302,7 +309,7 @@
                                     <ItemsControl x:Name="devicesList">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
-                                                <Border BorderBrush="#2E2E2E" BorderThickness="0,0,0,1">
+                                                <Border x:Name="rowBorder" BorderBrush="#2E2E2E" BorderThickness="0,0,0,1">
                                                     <Grid Margin="16,10">
                                                         <Grid.ColumnDefinitions>
                                                             <ColumnDefinition Width="110"/>
@@ -314,10 +321,17 @@
                                                         <TextBlock Grid.Column="0" Text="{Binding Ip}" Style="{StaticResource CellStyle}"/>
                                                         <TextBlock Grid.Column="1" Text="{Binding Hostname}" Style="{StaticResource CellStyle}"/>
                                                         <TextBlock Grid.Column="2" Text="{Binding Mac}" Style="{StaticResource CellStyle}" Foreground="#9A9A9A"/>
-                                                        <TextBlock Grid.Column="3" Text="{Binding Vendor}" Style="{StaticResource CellStyle}" Foreground="#9A9A9A" TextTrimming="CharacterEllipsis"/>
+                                                        <TextBlock x:Name="vendorText" Grid.Column="3" Text="{Binding Vendor}" Style="{StaticResource CellStyle}" Foreground="#9A9A9A" TextTrimming="CharacterEllipsis"/>
                                                         <TextBlock Grid.Column="4" Text="Online" Style="{StaticResource CellStyle}" Foreground="{StaticResource GoodBrush}"/>
                                                     </Grid>
                                                 </Border>
+                                                <DataTemplate.Triggers>
+                                                    <DataTrigger Binding="{Binding IsSelf}" Value="True">
+                                                        <Setter TargetName="rowBorder" Property="Background" Value="{StaticResource AccentSoftBrush}"/>
+                                                        <Setter TargetName="vendorText" Property="Foreground" Value="{StaticResource AccentBrush}"/>
+                                                        <Setter TargetName="vendorText" Property="FontWeight" Value="SemiBold"/>
+                                                    </DataTrigger>
+                                                </DataTemplate.Triggers>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>

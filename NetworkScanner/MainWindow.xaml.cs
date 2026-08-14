@@ -152,7 +152,7 @@ namespace NetworkScanner
                 {
                     _devices.Add(device);
                     txtDevicesStatus.Text = $"Subnet {details.Ipv4}/{details.SubnetPrefixLength} — {_devices.Count} device{(_devices.Count == 1 ? "" : "s")} found";
-                }, _devicesCts.Token);
+                }, _devicesCts.Token, localMac: details.Mac);
 
                 txtDevicesStatus.Text = _devicesCts.Token.IsCancellationRequested
                     ? $"Cancelled — {_devices.Count} device{(_devices.Count == 1 ? "" : "s")} found"

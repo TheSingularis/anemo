@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace NetworkWidget.Core
 {
-    public sealed record DiscoveredDevice(string Ip, string Hostname, string Mac, string Vendor);
+    public sealed record DiscoveredDevice(string Ip, string Hostname, string Mac, string Vendor, bool IsSelf = false);
 
     // Ping-sweeps the local subnet to populate the OS ARP cache, then reads that cache
     // once (arp -a) rather than shelling out per host. Reverse DNS and vendor lookup are
@@ -27,7 +27,8 @@ namespace NetworkWidget.Core
             Action<DiscoveredDevice> onDevice,
             CancellationToken cancelToken,
             int concurrency = 64,
-            int pingTimeoutMs = 400)
+            int pingTimeoutMs = 400,
+            string? localMac = null)
         {
             var hosts = EnumerateHosts(localIp, prefixLength).Take(MaxHostsToScan).ToList();
             var liveIps = new ConcurrentBag<string>();
@@ -65,10 +66,13 @@ namespace NetworkWidget.Core
             {
                 if (cancelToken.IsCancellationRequested) return;
 
-                var mac = arpTable.GetValueOrDefault(ip, "-");
-                var vendor = mac == "-" ? "-" : OuiVendors.Lookup(mac);
+                // A machine never ARPs itself, so its own row would otherwise show a
+                // blank MAC/vendor even though we already know both from the local NIC.
+                bool isSelf = ip == localIp && localMac != null;
+                var mac = isSelf ? localMac! : arpTable.GetValueOrDefault(ip, "-");
+                var vendor = isSelf ? "This device" : mac == "-" ? "-" : OuiVendors.Lookup(mac);
                 var hostname = await TryResolveHostnameAsync(ip);
-                onDevice(new DiscoveredDevice(ip, hostname, mac, vendor));
+                onDevice(new DiscoveredDevice(ip, hostname, mac, vendor, isSelf));
             }
         }
 
