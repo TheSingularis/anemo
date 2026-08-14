@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace NetworkWidget.Core
+namespace Anemo.Core
 {
     // Backed by an embedded copy of the official IEEE OUI registry
     // (https://standards-oui.ieee.org/oui/oui.txt), trimmed to just prefix,vendor pairs.
@@ -29,7 +29,7 @@ namespace NetworkWidget.Core
             var dict = new Dictionary<string, string>();
             var asm = typeof(OuiVendors).Assembly;
 
-            using var stream = asm.GetManifestResourceStream("NetworkWidget.Core.oui.csv");
+            using var stream = asm.GetManifestResourceStream("Anemo.Core.oui.csv");
             if (stream == null) return dict;
 
             using var reader = new StreamReader(stream);

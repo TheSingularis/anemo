@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using NetworkWidget.Core;
+using Anemo.Core;
 
-namespace NetworkScanner
+namespace Anemo.Scanner
 {
     public partial class MainWindow : Window
     {
@@ -485,7 +485,7 @@ namespace NetworkScanner
             _checkingForUpdates = true;
             btnCheckForUpdates.IsEnabled = false;
 
-            var splash = new UpdateProgressWindow("Network Scanner");
+            var splash = new UpdateProgressWindow("Anemo Scanner");
             splash.Show();
 
             var (mgr, info) = await AppUpdater.CheckAsync(status => splash.SetStatus(status));

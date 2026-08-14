@@ -1,15 +1,15 @@
-<Window x:Class="NetworkScanner.MainWindow"
+<Window x:Class="Anemo.Scanner.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
-        Title="Network Scanner" Width="980" Height="640" MinWidth="760" MinHeight="480"
+        Title="Anemo Scanner" Width="980" Height="640" MinWidth="760" MinHeight="480"
         WindowStyle="None" AllowsTransparency="False" ResizeMode="CanResize"
         WindowStartupLocation="CenterScreen" Background="#202020"
         FontFamily="Segoe UI Variable Text, Segoe UI">
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="pack://application:,,,/NetworkWidget.Core;component/Styles/DarkScrollBar.xaml"/>
+                <ResourceDictionary Source="pack://application:,,,/Anemo.Core;component/Styles/DarkScrollBar.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
         <SolidColorBrush x:Key="AccentBrush" Color="#3A7EE0"/>
@@ -187,7 +187,7 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="14,0,0,0" VerticalAlignment="Center">
-                    <TextBlock Text="Network Scanner" Foreground="#EEEEEE" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    <TextBlock Text="Anemo Scanner" Foreground="#EEEEEE" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"/>
                     <TextBlock Text="  ·  concept preview" Foreground="#6A6A6A" FontSize="11" VerticalAlignment="Center"/>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
@@ -543,7 +543,7 @@
                     <ScrollViewer x:Name="pageTraceroute" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
                         <StackPanel>
                             <TextBlock Text="Traceroute" Style="{StaticResource PageTitleStyle}"/>
-                            <TextBlock Text="Trace the network path to a host, hop by hop. Same engine as the NetworkWidget tray tool." Style="{StaticResource PageDescStyle}"/>
+                            <TextBlock Text="Trace the network path to a host, hop by hop. Same engine as the Anemo tray tool." Style="{StaticResource PageDescStyle}"/>
 
                             <Grid Margin="0,0,0,16">
                                 <Grid.ColumnDefinitions>

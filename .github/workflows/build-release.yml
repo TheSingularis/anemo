@@ -30,7 +30,7 @@ jobs:
       - name: Publish widget (sanity build)
         if: github.ref == 'refs/heads/dev'
         run: >
-          dotnet publish NetworkWidget.csproj -c Release -r win-x64 --self-contained true
+          dotnet publish Anemo.csproj -c Release -r win-x64 --self-contained true
           -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
           -o publish-widget
 
@@ -38,14 +38,14 @@ jobs:
         if: github.ref == 'refs/heads/dev'
         uses: actions/upload-artifact@v4
         with:
-          name: NetworkWidget-win-x64
-          path: publish-widget/NetworkWidget.exe
+          name: Anemo-win-x64
+          path: publish-widget/Anemo.exe
           if-no-files-found: error
 
       - name: Publish scanner (sanity build)
         if: github.ref == 'refs/heads/dev'
         run: >
-          dotnet publish NetworkScanner/NetworkScanner.csproj -c Release -r win-x64 --self-contained true
+          dotnet publish Anemo.Scanner/Anemo.Scanner.csproj -c Release -r win-x64 --self-contained true
           -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
           -o publish-scanner
 
@@ -53,8 +53,8 @@ jobs:
         if: github.ref == 'refs/heads/dev'
         uses: actions/upload-artifact@v4
         with:
-          name: NetworkScanner-win-x64
-          path: publish-scanner/NetworkScanner.exe
+          name: Anemo.Scanner-win-x64
+          path: publish-scanner/Anemo.Scanner.exe
           if-no-files-found: error
 
       # Everything below only runs for a tagged release, since Velopack packaging
@@ -70,21 +70,21 @@ jobs:
             # Stays on Velopack's default "win" channel (no -c flag) - already-installed
             # copies expect releases.win.json, so this can never change without breaking
             # auto-update for everyone currently running the widget.
-            echo "app_id=NetworkWidget" >> $env:GITHUB_OUTPUT
-            echo "csproj=NetworkWidget.csproj" >> $env:GITHUB_OUTPUT
-            echo "exe_name=NetworkWidget.exe" >> $env:GITHUB_OUTPUT
+            echo "app_id=Anemo" >> $env:GITHUB_OUTPUT
+            echo "csproj=Anemo.csproj" >> $env:GITHUB_OUTPUT
+            echo "exe_name=Anemo.exe" >> $env:GITHUB_OUTPUT
             echo "version=$($ref -replace '^widget-v', '')" >> $env:GITHUB_OUTPUT
             echo "channel_args=" >> $env:GITHUB_OUTPUT
-            echo "title=Network Widget" >> $env:GITHUB_OUTPUT
+            echo "title=Anemo" >> $env:GITHUB_OUTPUT
           } elseif ($ref -like "scanner-v*") {
             # Explicit channel keeps its release feed (releases.scanner.json) from ever
             # being confused with the widget's, since both live in this same repo.
-            echo "app_id=NetworkScanner" >> $env:GITHUB_OUTPUT
-            echo "csproj=NetworkScanner/NetworkScanner.csproj" >> $env:GITHUB_OUTPUT
-            echo "exe_name=NetworkScanner.exe" >> $env:GITHUB_OUTPUT
+            echo "app_id=Anemo.Scanner" >> $env:GITHUB_OUTPUT
+            echo "csproj=Anemo.Scanner/Anemo.Scanner.csproj" >> $env:GITHUB_OUTPUT
+            echo "exe_name=Anemo.Scanner.exe" >> $env:GITHUB_OUTPUT
             echo "version=$($ref -replace '^scanner-v', '')" >> $env:GITHUB_OUTPUT
             echo "channel_args=-c scanner" >> $env:GITHUB_OUTPUT
-            echo "title=Network Scanner" >> $env:GITHUB_OUTPUT
+            echo "title=Anemo Scanner" >> $env:GITHUB_OUTPUT
           } else {
             Write-Error "Unrecognized tag pattern: $ref"
             exit 1

@@ -10,7 +10,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace NetworkWidget.Core
+namespace Anemo.Core
 {
     public sealed record DiscoveredDevice(string Ip, string Hostname, string Mac, string Vendor, bool IsSelf = false);
 

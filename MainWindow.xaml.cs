@@ -7,11 +7,11 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
-using NetworkWidget.Core;
+using Anemo.Core;
 using WinForms = System.Windows.Forms;
 using Drawing = System.Drawing;
 
-namespace NetworkWidget
+namespace Anemo
 {
     public partial class MainWindow : Window
     {
@@ -140,7 +140,7 @@ namespace NetworkWidget
             _trayIcon = new WinForms.NotifyIcon
             {
                 Icon = Drawing.Icon.ExtractAssociatedIcon(Process.GetCurrentProcess().MainModule!.FileName!),
-                Text = "Network Widget",
+                Text = "Anemo",
                 Visible = true
             };
 
@@ -173,7 +173,7 @@ namespace NetworkWidget
         {
             _ = AppUpdater.CheckAndApplyAsync(onUpdateApplying: async version =>
             {
-                _trayIcon?.ShowBalloonTip(4000, "Network Widget",
+                _trayIcon?.ShowBalloonTip(4000, "Anemo",
                     $"Updating to v{version}, relaunching...", WinForms.ToolTipIcon.Info);
                 // Give the balloon a moment to actually render before the process
                 // restarts out from under it.
@@ -527,7 +527,7 @@ namespace NetworkWidget
         // every click)
         // -------------------------------------------------------------
 
-        private const string RenewTaskName = "NetworkWidget_ReleaseRenew";
+        private const string RenewTaskName = "Anemo_ReleaseRenew";
         private static readonly string RenewLogPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "netwidget_renew.log");
         private static readonly string RenewScriptPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "netwidget_renew_task.bat");
 

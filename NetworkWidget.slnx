@@ -1,5 +1,0 @@
-<Solution>
-  <Project Path="NetworkScanner/NetworkScanner.csproj" />
-  <Project Path="NetworkWidget.Core/NetworkWidget.Core.csproj" />
-  <Project Path="NetworkWidget.csproj" />
-</Solution>

@@ -1,12 +1,12 @@
 using System.Windows;
 
-namespace NetworkWidget.Core
+namespace Anemo.Core
 {
     public partial class UpdateProgressWindow : Window
     {
         private bool _closed;
 
-        public UpdateProgressWindow(string appName = "Network Widget")
+        public UpdateProgressWindow(string appName = "Anemo")
         {
             InitializeComponent();
 

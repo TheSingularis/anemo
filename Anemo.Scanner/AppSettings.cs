@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Text.Json;
 
-namespace NetworkScanner
+namespace Anemo.Scanner
 {
     public class AppSettings
     {
@@ -11,7 +11,7 @@ namespace NetworkScanner
 
         private static string FilePath => Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "NetworkScanner", "settings.json");
+            "Anemo.Scanner", "settings.json");
 
         public static AppSettings Load()
         {

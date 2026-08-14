@@ -1,7 +1,11 @@
-# Network Widget
+# Anemo
 
 A small always-on-top desktop widget + tray icon for Windows showing live
 IPv4 config and WiFi status, with a one-click Release & Renew button.
+
+This repo also hosts **Anemo Scanner** (`Anemo.Scanner/`), a full-size network
+scanning app (device discovery, Wi-Fi analyzer, port scanner, speed test,
+traceroute) that shares its core logic with the widget via `Anemo.Core/`.
 
 ## Requirements to build
 
@@ -17,7 +21,7 @@ From this folder, in a normal (non-admin) terminal:
 dotnet build -c Release
 ```
 
-The exe will land in `bin\Release\net8.0-windows\NetworkWidget.exe`.
+The exe will land in `bin\Release\net8.0-windows\Anemo.exe`.
 
 ## Publish as a single self-contained exe (recommended for GravityZone)
 
@@ -25,7 +29,7 @@ The exe will land in `bin\Release\net8.0-windows\NetworkWidget.exe`.
 dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
 ```
 
-Output lands in `bin\Release\net8.0-windows\win-x64\publish\NetworkWidget.exe`.
+Output lands in `bin\Release\net8.0-windows\win-x64\publish\Anemo.exe`.
 This is a real compiled .NET binary rather than a PS2EXE wrapper around a
 script, so it should read very differently to AV heuristics that flag
 PS2EXE-packed executables specifically. If GravityZone still flags it, the

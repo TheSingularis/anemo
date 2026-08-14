@@ -5,7 +5,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace NetworkWidget.Core
+namespace Anemo.Core
 {
     public sealed record PortResult(int Port, string Service, bool IsOpen);
 

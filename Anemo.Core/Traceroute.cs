@@ -5,7 +5,7 @@ using System.Net.NetworkInformation;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace NetworkWidget.Core
+namespace Anemo.Core
 {
     public class HopResult : INotifyPropertyChanged
     {

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 
-namespace NetworkWidget.Core
+namespace Anemo.Core
 {
     public sealed record AdapterDetails(
         string LinkSpeedText,

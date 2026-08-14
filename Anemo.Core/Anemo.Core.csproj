@@ -5,7 +5,7 @@
     <UseWPF>true</UseWPF>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <RootNamespace>NetworkWidget.Core</RootNamespace>
+    <RootNamespace>Anemo.Core</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

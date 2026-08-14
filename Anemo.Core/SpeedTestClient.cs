@@ -6,7 +6,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace NetworkWidget.Core
+namespace Anemo.Core
 {
     public sealed record SpeedTestServer(string Name, string BaseUrl, string DownloadPath, string UploadPath, string PingPath);
 

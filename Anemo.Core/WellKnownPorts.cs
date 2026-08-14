@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace NetworkWidget.Core
+namespace Anemo.Core
 {
     // Common TCP services, per IANA's service name registry - not exhaustive, just the
     // ports someone scanning their own network would actually recognize.

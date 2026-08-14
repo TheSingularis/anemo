@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Velopack;
 using Velopack.Sources;
 
-namespace NetworkWidget.Core
+namespace Anemo.Core
 {
     // Shared by every app in this repo - they all live in the same GitHub repo/releases
     // list, but each is packaged under its own Velopack channel (see vpk pack --channel
@@ -12,7 +12,7 @@ namespace NetworkWidget.Core
     // entirely on the packaging side.
     public static class AppUpdater
     {
-        private const string RepoUrl = "https://github.com/TheSingularis/NetworkWidget";
+        private const string RepoUrl = "https://github.com/TheSingularis/anemo";
 
         // Passed back to the relaunched process via restartArgs after an update is
         // applied, so the caller can open straight to the app instead of running the

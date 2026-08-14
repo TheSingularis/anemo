@@ -2,7 +2,7 @@ using System.Net.Http;
 using System.Net.NetworkInformation;
 using System.Threading.Tasks;
 
-namespace NetworkWidget.Core
+namespace Anemo.Core
 {
     public static class Connectivity
     {

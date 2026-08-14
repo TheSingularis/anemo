@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
 
-namespace NetworkWidget.Core
+namespace Anemo.Core
 {
     // WindowStyle="None" gives a fully custom title bar, but it also means Windows 11's
     // automatic corner rounding and dark-mode chrome no longer apply on their own - only

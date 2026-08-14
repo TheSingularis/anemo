@@ -1,9 +1,9 @@
 using System;
 using System.Threading.Tasks;
 using System.Windows;
-using NetworkWidget.Core;
+using Anemo.Core;
 
-namespace NetworkScanner
+namespace Anemo.Scanner
 {
     public partial class App : System.Windows.Application
     {
@@ -38,7 +38,7 @@ namespace NetworkScanner
             // sequence - closing the splash below would otherwise momentarily drop the
             // open-window count to zero before MainWindow exists, triggering WPF's
             // default auto-shutdown-on-last-window-close before we ever get there.
-            var splash = new UpdateProgressWindow("Network Scanner");
+            var splash = new UpdateProgressWindow("Anemo Scanner");
             splash.Show();
 
             // Only the check itself is time-boxed - if GitHub is slow or unreachable,

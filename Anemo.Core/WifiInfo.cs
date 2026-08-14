@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using ManagedNativeWifi;
 
-namespace NetworkWidget.Core
+namespace Anemo.Core
 {
     public sealed record CurrentWifiInfo(
         bool Connected,

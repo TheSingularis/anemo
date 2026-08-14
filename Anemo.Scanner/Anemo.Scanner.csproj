@@ -6,12 +6,12 @@
     <UseWPF>true</UseWPF>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <AssemblyName>NetworkScanner</AssemblyName>
-    <RootNamespace>NetworkScanner</RootNamespace>
+    <AssemblyName>Anemo.Scanner</AssemblyName>
+    <RootNamespace>Anemo.Scanner</RootNamespace>
     <ApplicationIcon>..\app.ico</ApplicationIcon>
     <Version>0.1.0</Version>
     <Company>Jordan</Company>
-    <Product>Network Scanner</Product>
+    <Product>Anemo Scanner</Product>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\NetworkWidget.Core\NetworkWidget.Core.csproj" />
+    <ProjectReference Include="..\Anemo.Core\Anemo.Core.csproj" />
   </ItemGroup>
 
 </Project>

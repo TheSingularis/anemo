@@ -7,36 +7,36 @@
     <UseWindowsForms>true</UseWindowsForms>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <AssemblyName>NetworkWidget</AssemblyName>
-    <RootNamespace>NetworkWidget</RootNamespace>
+    <AssemblyName>Anemo</AssemblyName>
+    <RootNamespace>Anemo</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>app.ico</ApplicationIcon>
     <Version>1.2.11</Version>
     <Company>Jordan</Company>
-    <Product>Network Widget</Product>
+    <Product>Anemo</Product>
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- ManagedNativeWifi is used by NetworkWidget.Core (WifiInfo.cs) and flows through
+    <!-- ManagedNativeWifi is used by Anemo.Core (WifiInfo.cs) and flows through
          via the ProjectReference below - no need to also declare it directly here. -->
     <PackageReference Include="Velopack" Version="1.2.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="NetworkWidget.Core\NetworkWidget.Core.csproj" />
+    <ProjectReference Include="Anemo.Core\Anemo.Core.csproj" />
   </ItemGroup>
 
   <!-- This project's own files sit at the repo root alongside the sibling
-       NetworkScanner/ and NetworkWidget.Core/ projects, so the default recursive
+       Anemo.Scanner/ and Anemo.Core/ projects, so the default recursive
        glob would otherwise try to compile their sources into this assembly too. -->
   <ItemGroup>
-    <Compile Remove="NetworkScanner\**" />
-    <Compile Remove="NetworkWidget.Core\**" />
-    <Page Remove="NetworkScanner\**" />
-    <Page Remove="NetworkWidget.Core\**" />
-    <ApplicationDefinition Remove="NetworkScanner\**" />
-    <None Remove="NetworkScanner\**" />
-    <None Remove="NetworkWidget.Core\**" />
+    <Compile Remove="Anemo.Scanner\**" />
+    <Compile Remove="Anemo.Core\**" />
+    <Page Remove="Anemo.Scanner\**" />
+    <Page Remove="Anemo.Core\**" />
+    <ApplicationDefinition Remove="Anemo.Scanner\**" />
+    <None Remove="Anemo.Scanner\**" />
+    <None Remove="Anemo.Core\**" />
   </ItemGroup>
 
 </Project>
