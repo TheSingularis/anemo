@@ -6,7 +6,9 @@ on:
     # together with a tag (main == latest release), so it doesn't need its own
     # trigger here - the tags entry below covers it.
     branches: [ dev ]
-    tags: [ 'v*' ]
+    # Each app is tagged and released independently (widget-vX.Y.Z / scanner-vX.Y.Z)
+    # since they ship on their own cadence, even though they live in one repo.
+    tags: [ 'widget-v*', 'scanner-v*' ]
 
 jobs:
   build:
@@ -23,47 +25,99 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Publish self-contained single-file exe
+      # Every dev push sanity-builds both apps as plain exes (no packaging) - cheap
+      # confirmation that nothing is broken, without waiting for a real release.
+      - name: Publish widget (sanity build)
+        if: github.ref == 'refs/heads/dev'
         run: >
           dotnet publish NetworkWidget.csproj -c Release -r win-x64 --self-contained true
           -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
-          -o publish
+          -o publish-widget
 
-      - name: Upload build artifact
+      - name: Upload widget build artifact
+        if: github.ref == 'refs/heads/dev'
         uses: actions/upload-artifact@v4
         with:
           name: NetworkWidget-win-x64
-          path: publish/NetworkWidget.exe
+          path: publish-widget/NetworkWidget.exe
+          if-no-files-found: error
+
+      - name: Publish scanner (sanity build)
+        if: github.ref == 'refs/heads/dev'
+        run: >
+          dotnet publish NetworkScanner/NetworkScanner.csproj -c Release -r win-x64 --self-contained true
+          -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
+          -o publish-scanner
+
+      - name: Upload scanner build artifact
+        if: github.ref == 'refs/heads/dev'
+        uses: actions/upload-artifact@v4
+        with:
+          name: NetworkScanner-win-x64
+          path: publish-scanner/NetworkScanner.exe
           if-no-files-found: error
 
       # Everything below only runs for a tagged release, since Velopack packaging
       # (Setup.exe + portable zip + update feed) is only meaningful for a real
-      # published version - the plain exe above is enough to sanity-check every push.
-      - name: Determine release version
-        if: startsWith(github.ref, 'refs/tags/v')
-        id: version
+      # published version - the plain exes above are enough to sanity-check every push.
+      - name: Determine release target
+        if: startsWith(github.ref, 'refs/tags/')
+        id: target
         shell: pwsh
         run: |
-          $ver = "${{ github.ref_name }}" -replace '^v', ''
-          echo "value=$ver" >> $env:GITHUB_OUTPUT
+          $ref = "${{ github.ref_name }}"
+          if ($ref -like "widget-v*") {
+            # Stays on Velopack's default "win" channel (no -c flag) - already-installed
+            # copies expect releases.win.json, so this can never change without breaking
+            # auto-update for everyone currently running the widget.
+            echo "app_id=NetworkWidget" >> $env:GITHUB_OUTPUT
+            echo "csproj=NetworkWidget.csproj" >> $env:GITHUB_OUTPUT
+            echo "exe_name=NetworkWidget.exe" >> $env:GITHUB_OUTPUT
+            echo "version=$($ref -replace '^widget-v', '')" >> $env:GITHUB_OUTPUT
+            echo "channel_args=" >> $env:GITHUB_OUTPUT
+            echo "title=Network Widget" >> $env:GITHUB_OUTPUT
+          } elseif ($ref -like "scanner-v*") {
+            # Explicit channel keeps its release feed (releases.scanner.json) from ever
+            # being confused with the widget's, since both live in this same repo.
+            echo "app_id=NetworkScanner" >> $env:GITHUB_OUTPUT
+            echo "csproj=NetworkScanner/NetworkScanner.csproj" >> $env:GITHUB_OUTPUT
+            echo "exe_name=NetworkScanner.exe" >> $env:GITHUB_OUTPUT
+            echo "version=$($ref -replace '^scanner-v', '')" >> $env:GITHUB_OUTPUT
+            echo "channel_args=-c scanner" >> $env:GITHUB_OUTPUT
+            echo "title=Network Scanner" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Error "Unrecognized tag pattern: $ref"
+            exit 1
+          }
+
+      - name: Publish self-contained single-file exe for release
+        if: startsWith(github.ref, 'refs/tags/')
+        run: >
+          dotnet publish ${{ steps.target.outputs.csproj }} -c Release -r win-x64 --self-contained true
+          -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
+          -o publish
 
       - name: Remove debug symbols before packaging
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/')
         shell: pwsh
         run: Remove-Item -Path publish/*.pdb -ErrorAction SilentlyContinue
 
       - name: Install Velopack CLI
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/')
         run: dotnet tool install -g vpk
 
       - name: Package release with Velopack
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
         run: >
-          vpk pack -u NetworkWidget -v ${{ steps.version.outputs.value }}
-          -p publish -e NetworkWidget.exe -o velopack-release --icon app.ico
+          vpk pack -u ${{ steps.target.outputs.app_id }} -v ${{ steps.target.outputs.version }}
+          -p publish -e ${{ steps.target.outputs.exe_name }} -o velopack-release --icon app.ico
+          ${{ steps.target.outputs.channel_args }}
 
       - name: Create GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release create ${{ github.ref_name }} velopack-release/* --generate-notes
+        run: >
+          gh release create ${{ github.ref_name }} velopack-release/*
+          --title "${{ steps.target.outputs.title }} ${{ github.ref_name }}" --generate-notes
