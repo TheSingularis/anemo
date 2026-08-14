@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
@@ -234,6 +235,46 @@ namespace NetworkScanner
         // -------------------------------------------------------------
 
         private bool _speedTestRunning;
+        private readonly Queue<double> _graphHistory = new();
+        private DateTime _lastGraphSample;
+        private const int GraphHistoryLength = 40;
+
+        // Progress callbacks fire on every chunk (potentially many times a second on a
+        // fast link) - sampling on a fixed cadence keeps the graph smooth instead of
+        // redrawing far more often than the eye can actually use.
+        private void ResetGraph(string label)
+        {
+            _graphHistory.Clear();
+            _lastGraphSample = DateTime.MinValue;
+            txtGraphLabel.Text = label;
+            speedGraph.Points.Clear();
+        }
+
+        private void SampleGraph(double mbps)
+        {
+            var now = DateTime.UtcNow;
+            if ((now - _lastGraphSample).TotalMilliseconds < 150) return;
+            _lastGraphSample = now;
+
+            _graphHistory.Enqueue(mbps);
+            while (_graphHistory.Count > GraphHistoryLength) _graphHistory.Dequeue();
+
+            if (_graphHistory.Count < 2) return;
+
+            double width = speedGraph.ActualWidth > 0 ? speedGraph.ActualWidth : 472;
+            double height = speedGraph.Height;
+            double max = Math.Max(_graphHistory.Max(), 1);
+
+            var samples = _graphHistory.ToArray();
+            var points = new System.Windows.Media.PointCollection(samples.Length);
+            for (int i = 0; i < samples.Length; i++)
+            {
+                double x = width * i / (samples.Length - 1);
+                double y = height - (samples[i] / max * height);
+                points.Add(new System.Windows.Point(x, y));
+            }
+            speedGraph.Points = points;
+        }
 
         private async void btnStartSpeedTest_Click(object sender, RoutedEventArgs e)
         {
@@ -244,6 +285,7 @@ namespace NetworkScanner
             txtDownloadResult.Text = "0.0";
             txtUploadResult.Text = "0.0";
             txtPingResult.Text = "--";
+            ResetGraph("");
 
             try
             {
@@ -262,12 +304,20 @@ namespace NetworkScanner
                 txtPingResult.Text = ping >= 0 ? $"{ping:0}" : "--";
 
                 txtSpeedStatus.Text = $"Testing download — {server.Name}";
+                ResetGraph("DOWNLOAD Mbps");
                 var download = await SpeedTestClient.DownloadTestAsync(server, mbps =>
-                    txtDownloadResult.Text = mbps.ToString("0.0"));
+                {
+                    txtDownloadResult.Text = mbps.ToString("0.0");
+                    SampleGraph(mbps);
+                });
 
                 txtSpeedStatus.Text = $"Testing upload — {server.Name}";
+                ResetGraph("UPLOAD Mbps");
                 var upload = await SpeedTestClient.UploadTestAsync(server, mbps =>
-                    txtUploadResult.Text = mbps.ToString("0.0"));
+                {
+                    txtUploadResult.Text = mbps.ToString("0.0");
+                    SampleGraph(mbps);
+                });
 
                 txtDownloadResult.Text = download.ToString("0.0");
                 txtUploadResult.Text = upload.ToString("0.0");

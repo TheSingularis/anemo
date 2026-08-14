@@ -460,7 +460,19 @@
                                             <TextBlock Text="ms" Foreground="#8A8A8A" FontSize="11" HorizontalAlignment="Center"/>
                                         </StackPanel>
                                     </UniformGrid>
-                                    <Button x:Name="btnStartSpeedTest" Content="Start Test" Style="{StaticResource AccentButtonStyle}" Width="140" Margin="0,26,0,0" Click="btnStartSpeedTest_Click"/>
+
+                                    <!-- Live throughput trend for whichever phase (download/upload) is
+                                         currently running - auto-scaled to the peak seen so far, same
+                                         approach as the widget's traffic sparklines. -->
+                                    <Border Width="480" Height="70" Margin="0,18,0,0" Background="#1C1C1C" CornerRadius="6">
+                                        <Grid Margin="4">
+                                            <Polyline x:Name="speedGraph" Stroke="{StaticResource AccentBrush}" StrokeThickness="2"
+                                                      StrokeLineJoin="Round" Height="62" VerticalAlignment="Bottom" HorizontalAlignment="Stretch"/>
+                                            <TextBlock x:Name="txtGraphLabel" Text="" Foreground="#6A6A6A" FontSize="10" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="6,4,0,0"/>
+                                        </Grid>
+                                    </Border>
+
+                                    <Button x:Name="btnStartSpeedTest" Content="Start Test" Style="{StaticResource AccentButtonStyle}" Width="140" Margin="0,20,0,0" Click="btnStartSpeedTest_Click"/>
                                     <TextBlock x:Name="txtSpeedStatus" Text="" Foreground="#9A9A9A" FontSize="11" HorizontalAlignment="Center" Margin="0,12,0,0"/>
                                 </StackPanel>
                             </Border>
