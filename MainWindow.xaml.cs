@@ -150,6 +150,7 @@ namespace NetworkWidget
             menu.Items.Add("Show/Hide", null, (_, _) => ToggleVisibility());
             menu.Items.Add("Refresh Now", null, (_, _) => RefreshNetworkInfo());
             menu.Items.Add(new WinForms.ToolStripSeparator());
+            menu.Items.Add("Traceroute...", null, (_, _) => OpenTraceroute());
             menu.Items.Add("Settings...", null, (_, _) => OpenSettings());
             menu.Items.Add("Check for Updates", null, (_, _) => CheckForUpdatesWithProgress());
             menu.Items.Add(new WinForms.ToolStripSeparator());
@@ -227,6 +228,20 @@ namespace NetworkWidget
 
             _settingsWindow.Show();
             _settingsWindow.Activate();
+        }
+
+        private TracerouteWindow? _tracerouteWindow;
+
+        private void OpenTraceroute()
+        {
+            if (_tracerouteWindow == null)
+            {
+                _tracerouteWindow = new TracerouteWindow();
+                _tracerouteWindow.Closed += (_, _) => _tracerouteWindow = null;
+            }
+
+            _tracerouteWindow.Show();
+            _tracerouteWindow.Activate();
         }
 
         private void ToggleVisibility()
