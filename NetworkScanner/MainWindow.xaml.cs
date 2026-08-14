@@ -37,7 +37,11 @@ namespace NetworkScanner
             hopsList.ItemsSource = _hops;
             activityList.ItemsSource = _activity;
 
-            Loaded += (_, _) => LoadDashboard();
+            Loaded += (_, _) =>
+            {
+                LoadDashboard();
+                LoadSettings();
+            };
         }
 
         // -------------------------------------------------------------
@@ -434,6 +438,43 @@ namespace NetworkScanner
             btnRunTrace.Content = "Run";
             txtTraceTarget.IsEnabled = true;
             _traceCts = null;
+        }
+
+        // -------------------------------------------------------------
+        // Settings
+        // -------------------------------------------------------------
+
+        private void LoadSettings()
+        {
+            var settings = AppSettings.Load();
+            txtPortFrom.Text = settings.DefaultPortFrom.ToString();
+            txtPortTo.Text = settings.DefaultPortTo.ToString();
+            txtSettingsPortFrom.Text = settings.DefaultPortFrom.ToString();
+            txtSettingsPortTo.Text = settings.DefaultPortTo.ToString();
+
+            var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+            txtVersion.Text = version != null ? $"{version.Major}.{version.Minor}.{version.Build}" : "-";
+        }
+
+        private void btnSaveSettings_Click(object sender, RoutedEventArgs e)
+        {
+            if (!int.TryParse(txtSettingsPortFrom.Text.Trim(), out var from)
+                || !int.TryParse(txtSettingsPortTo.Text.Trim(), out var to)
+                || from < 1 || to > 65535 || from > to)
+            {
+                txtSettingsStatus.Foreground = (System.Windows.Media.Brush)FindResource("BadBrush");
+                txtSettingsStatus.Text = "Enter a valid port range (1-65535)";
+                return;
+            }
+
+            var settings = new AppSettings { DefaultPortFrom = from, DefaultPortTo = to };
+            settings.Save();
+
+            txtPortFrom.Text = from.ToString();
+            txtPortTo.Text = to.ToString();
+
+            txtSettingsStatus.Foreground = (System.Windows.Media.Brush)FindResource("GoodBrush");
+            txtSettingsStatus.Text = "Saved";
         }
     }
 }

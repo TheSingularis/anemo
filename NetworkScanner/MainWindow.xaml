@@ -597,9 +597,42 @@
                     <ScrollViewer x:Name="pageSettings" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
                         <StackPanel>
                             <TextBlock Text="Settings" Style="{StaticResource PageTitleStyle}"/>
-                            <TextBlock Text="App preferences will live here — same shape as the widget's Settings pane (autostart, start minimized, updates, version)." Style="{StaticResource PageDescStyle}"/>
+                            <TextBlock Text="Preferences for this app." Style="{StaticResource PageDescStyle}"/>
+
+                            <TextBlock Text="Port Scanner Defaults" Foreground="#B5B5B5" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,10"/>
+                            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,20">
+                                <StackPanel>
+                                    <TextBlock Text="Port range pre-filled when you open the Port Scanner page." Foreground="#8A8A8A" FontSize="12" Margin="0,0,0,12"/>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="110"/>
+                                            <ColumnDefinition Width="14"/>
+                                            <ColumnDefinition Width="110"/>
+                                            <ColumnDefinition Width="16"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox x:Name="txtSettingsPortFrom" Grid.Column="0" Style="{StaticResource FieldTextBoxStyle}" VerticalContentAlignment="Center"/>
+                                        <TextBlock Grid.Column="1" Text="–" Foreground="#8A8A8A" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        <TextBox x:Name="txtSettingsPortTo" Grid.Column="2" Style="{StaticResource FieldTextBoxStyle}" VerticalContentAlignment="Center"/>
+                                        <Button x:Name="btnSaveSettings" Grid.Column="4" Content="Save" Style="{StaticResource AccentButtonStyle}" Click="btnSaveSettings_Click"/>
+                                    </Grid>
+                                    <TextBlock x:Name="txtSettingsStatus" Text="" Foreground="{StaticResource GoodBrush}" FontSize="11" Margin="0,10,0,0"/>
+                                </StackPanel>
+                            </Border>
+
+                            <TextBlock Text="About" Foreground="#B5B5B5" FontSize="13" FontWeight="SemiBold" Margin="0,0,0,10"/>
                             <Border Style="{StaticResource CardStyle}">
-                                <TextBlock Text="Placeholder — nothing wired up yet." Style="{StaticResource CellStyle}" Foreground="#7A7A7A"/>
+                                <StackPanel>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="Version" Foreground="#9A9A9A" FontSize="12"/>
+                                        <TextBlock x:Name="txtVersion" Grid.Column="1" Text="-" Foreground="#DDDDDD" FontSize="12"/>
+                                    </Grid>
+                                    <TextBlock Text="Auto-update isn't set up for this app yet — it's still on the roadmap." Foreground="#7A7A7A" FontSize="11" Margin="0,12,0,0" TextWrapping="Wrap"/>
+                                </StackPanel>
                             </Border>
                         </StackPanel>
                     </ScrollViewer>
