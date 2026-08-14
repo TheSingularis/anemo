@@ -208,8 +208,8 @@ namespace NetworkWidget
                         await Task.Delay(800);
                     });
                 // Only reached if the update attempt failed (best-effort, logged via
-                // status above) - a successful apply exits the process from inside
-                // ApplyUpdatesAndRestart and never returns here.
+                // status above) - a successful apply shuts the process down from
+                // inside DownloadAndApplyAsync and never returns here.
             }
 
             splash.Close();
