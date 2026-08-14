@@ -9,6 +9,8 @@ namespace NetworkWidget
 {
     public partial class TracerouteWindow : Window
     {
+        private const double MaxBarWidth = 40;
+
         private readonly ObservableCollection<HopResult> _hops = new();
         private CancellationTokenSource? _cts;
         private bool _running;
@@ -80,7 +82,11 @@ namespace NetworkWidget
 
             try
             {
-                await Traceroute.RunAsync(target, hop => _hops.Add(hop), _cts.Token);
+                await Traceroute.RunAsync(target, hop =>
+                {
+                    _hops.Add(hop);
+                    RescaleBars();
+                }, _cts.Token);
                 txtStatus.Text = _cts.Token.IsCancellationRequested
                     ? "Cancelled"
                     : $"Done - {_hops.Count} hop{(_hops.Count == 1 ? "" : "s")}";
@@ -93,6 +99,24 @@ namespace NetworkWidget
             _running = false;
             btnRun.Content = "Run";
             txtTarget.IsEnabled = true;
+        }
+
+        // Each hop's bar is sized relative to the slowest hop seen so far, so earlier
+        // rows get rescaled as later, slower hops come in.
+        private void RescaleBars()
+        {
+            double max = 0;
+            foreach (var h in _hops)
+            {
+                if (h.Rtt is double r && r > max) max = r;
+            }
+
+            if (max <= 0) return;
+
+            foreach (var h in _hops)
+            {
+                h.BarWidth = h.Rtt is double r ? (r / max) * MaxBarWidth : 0;
+            }
         }
     }
 }

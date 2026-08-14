@@ -1,15 +1,27 @@
 using System;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Net.NetworkInformation;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace NetworkWidget
 {
-    public class HopResult
+    public class HopResult : INotifyPropertyChanged
     {
         public int Hop { get; init; }
         public string Address { get; init; } = "";
         public string Time { get; init; } = "";
+        public double? Rtt { get; init; }
+
+        private double _barWidth;
+        public double BarWidth
+        {
+            get => _barWidth;
+            set { _barWidth = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(BarWidth))); }
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
     }
 
     // Mirrors classic tracert.exe behavior (increasing TTL, one probe per hop) using
@@ -34,6 +46,7 @@ namespace NetworkWidget
                 var options = new PingOptions(ttl, dontFragment: true);
 
                 PingReply reply;
+                var stopwatch = Stopwatch.StartNew();
                 try
                 {
                     reply = await ping.SendPingAsync(target, timeoutMs, options_data, options);
@@ -43,6 +56,7 @@ namespace NetworkWidget
                     onHop(new HopResult { Hop = ttl, Address = "Error", Time = "" });
                     continue;
                 }
+                stopwatch.Stop();
 
                 if (cancelToken.IsCancellationRequested) return;
 
@@ -50,11 +64,14 @@ namespace NetworkWidget
                 {
                     case IPStatus.TtlExpired:
                     case IPStatus.Success:
+                        // PingReply.RoundtripTime is unreliable on Windows for TTL-expired replies
+                        // (frequently reports 0), so time the round trip ourselves instead.
                         onHop(new HopResult
                         {
                             Hop = ttl,
                             Address = reply.Address?.ToString() ?? "*",
-                            Time = $"{reply.RoundtripTime} ms"
+                            Time = $"{stopwatch.ElapsedMilliseconds} ms",
+                            Rtt = stopwatch.ElapsedMilliseconds
                         });
                         if (reply.Status == IPStatus.Success) return; // reached the target
                         break;
