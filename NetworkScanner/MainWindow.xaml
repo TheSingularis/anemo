@@ -209,7 +209,7 @@
 
                 <!-- Sidebar -->
                 <Border Grid.Column="0" Background="#181818">
-                    <StackPanel Margin="0,14,0,0">
+                    <StackPanel>
                         <Button x:Name="navDashboard" Content="Dashboard" Style="{StaticResource NavButtonStyle}" Tag="selected" Click="Nav_Click"/>
                         <Button x:Name="navDevices" Content="Devices" Style="{StaticResource NavButtonStyle}" Click="Nav_Click"/>
                         <Button x:Name="navWifi" Content="Wi-Fi Analyzer" Style="{StaticResource NavButtonStyle}" Click="Nav_Click"/>
