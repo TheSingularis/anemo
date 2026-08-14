@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>NetworkWidget.Core</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ManagedNativeWifi" Version="3.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Compact prefix,vendor CSV derived from the official IEEE OUI registry
+         (https://standards-oui.ieee.org/oui/oui.txt), for MAC vendor lookups. -->
+    <EmbeddedResource Include="oui.csv" />
+  </ItemGroup>
+
+</Project>

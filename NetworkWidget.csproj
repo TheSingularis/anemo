@@ -21,4 +21,21 @@
     <PackageReference Include="Velopack" Version="1.2.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="NetworkWidget.Core\NetworkWidget.Core.csproj" />
+  </ItemGroup>
+
+  <!-- This project's own files sit at the repo root alongside the sibling
+       NetworkScanner/ and NetworkWidget.Core/ projects, so the default recursive
+       glob would otherwise try to compile their sources into this assembly too. -->
+  <ItemGroup>
+    <Compile Remove="NetworkScanner\**" />
+    <Compile Remove="NetworkWidget.Core\**" />
+    <Page Remove="NetworkScanner\**" />
+    <Page Remove="NetworkWidget.Core\**" />
+    <ApplicationDefinition Remove="NetworkScanner\**" />
+    <None Remove="NetworkScanner\**" />
+    <None Remove="NetworkWidget.Core\**" />
+  </ItemGroup>
+
 </Project>
