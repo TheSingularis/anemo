@@ -1,15 +1,17 @@
 using System.Windows;
-using NetworkWidget.Core;
 
-namespace NetworkWidget
+namespace NetworkWidget.Core
 {
     public partial class UpdateProgressWindow : Window
     {
         private bool _closed;
 
-        public UpdateProgressWindow()
+        public UpdateProgressWindow(string appName = "Network Widget")
         {
             InitializeComponent();
+
+            Title = appName;
+            txtTitleBar.Text = appName;
 
             SourceInitialized += (_, _) => DwmHelper.ApplyDarkRoundedStyling(this);
             Closed += (_, _) => _closed = true;

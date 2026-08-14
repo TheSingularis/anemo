@@ -476,5 +476,41 @@ namespace NetworkScanner
             txtSettingsStatus.Foreground = (System.Windows.Media.Brush)FindResource("GoodBrush");
             txtSettingsStatus.Text = "Saved";
         }
+
+        private bool _checkingForUpdates;
+
+        private async void btnCheckForUpdates_Click(object sender, RoutedEventArgs e)
+        {
+            if (_checkingForUpdates) return;
+            _checkingForUpdates = true;
+            btnCheckForUpdates.IsEnabled = false;
+
+            var splash = new UpdateProgressWindow("Network Scanner");
+            splash.Show();
+
+            var (mgr, info) = await AppUpdater.CheckAsync(status => splash.SetStatus(status));
+            if (info != null)
+            {
+                await AppUpdater.DownloadAndApplyAsync(mgr, info,
+                    status => splash.SetStatus(status),
+                    percent => splash.SetProgress(percent),
+                    async version =>
+                    {
+                        splash.SetStatus($"Updating to v{version}...");
+                        await Task.Delay(800);
+                    });
+                // Only reached if the update attempt failed (best-effort) - a
+                // successful apply shuts the process down and never returns here.
+                txtUpdateStatus.Text = "Update failed - see status above";
+            }
+            else
+            {
+                txtUpdateStatus.Text = mgr.IsInstalled ? "Up to date" : "Not managed by the updater";
+            }
+
+            splash.Close();
+            btnCheckForUpdates.IsEnabled = true;
+            _checkingForUpdates = false;
+        }
     }
 }

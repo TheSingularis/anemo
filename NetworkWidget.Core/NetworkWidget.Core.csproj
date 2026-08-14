@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <PackageReference Include="ManagedNativeWifi" Version="3.0.2" />
+    <PackageReference Include="Velopack" Version="1.2.0" />
   </ItemGroup>
 
   <ItemGroup>

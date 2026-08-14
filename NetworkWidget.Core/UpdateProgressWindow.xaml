@@ -1,4 +1,4 @@
-<Window x:Class="NetworkWidget.UpdateProgressWindow"
+<Window x:Class="NetworkWidget.Core.UpdateProgressWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Network Widget" Width="220" SizeToContent="Height"
@@ -44,7 +44,7 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="Network Widget" Foreground="#EEEEEE" FontSize="12"
+                <TextBlock x:Name="txtTitleBar" Grid.Column="0" Text="Network Widget" Foreground="#EEEEEE" FontSize="12"
                            VerticalAlignment="Center" Margin="12,0,0,0"/>
                 <Button x:Name="btnClose" Grid.Column="1" Style="{StaticResource CloseButtonStyle}" Click="btnClose_Click"/>
             </Grid>

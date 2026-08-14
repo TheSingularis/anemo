@@ -628,10 +628,13 @@
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="Version" Foreground="#9A9A9A" FontSize="12"/>
-                                        <TextBlock x:Name="txtVersion" Grid.Column="1" Text="-" Foreground="#DDDDDD" FontSize="12"/>
+                                        <TextBlock Grid.Column="0" Text="Version" Foreground="#9A9A9A" FontSize="12" VerticalAlignment="Center"/>
+                                        <TextBlock x:Name="txtVersion" Grid.Column="1" Text="-" Foreground="#DDDDDD" FontSize="12" VerticalAlignment="Center"/>
                                     </Grid>
-                                    <TextBlock Text="Auto-update isn't set up for this app yet — it's still on the roadmap." Foreground="#7A7A7A" FontSize="11" Margin="0,12,0,0" TextWrapping="Wrap"/>
+                                    <DockPanel Margin="0,14,0,0">
+                                        <Button x:Name="btnCheckForUpdates" Content="Check for Updates" Style="{StaticResource AccentButtonStyle}" DockPanel.Dock="Right" Click="btnCheckForUpdates_Click"/>
+                                        <TextBlock x:Name="txtUpdateStatus" Text="" Foreground="#8A8A8A" FontSize="11" VerticalAlignment="Center"/>
+                                    </DockPanel>
                                 </StackPanel>
                             </Border>
                         </StackPanel>
