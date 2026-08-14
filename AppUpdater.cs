@@ -67,9 +67,10 @@ namespace NetworkWidget
 
                 mgr.ApplyUpdatesAndRestart(updateInfo.TargetFullRelease);
             }
-            catch
+            catch (Exception ex)
             {
-                onStatus?.Invoke("Update failed");
+                onStatus?.Invoke($"Update failed: {ex.Message}");
+                await Task.Delay(2500);
             }
         }
 
