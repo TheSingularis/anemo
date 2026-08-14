@@ -30,7 +30,7 @@ jobs:
       - name: Publish widget (sanity build)
         if: github.ref == 'refs/heads/dev'
         run: >
-          dotnet publish Anemo.csproj -c Release -r win-x64 --self-contained true
+          dotnet publish Anemo.Widget.csproj -c Release -r win-x64 --self-contained true
           -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
           -o publish-widget
 
@@ -38,8 +38,8 @@ jobs:
         if: github.ref == 'refs/heads/dev'
         uses: actions/upload-artifact@v4
         with:
-          name: Anemo-win-x64
-          path: publish-widget/Anemo.exe
+          name: Anemo.Widget-win-x64
+          path: publish-widget/Anemo.Widget.exe
           if-no-files-found: error
 
       - name: Publish scanner (sanity build)
@@ -70,12 +70,12 @@ jobs:
             # Stays on Velopack's default "win" channel (no -c flag) - already-installed
             # copies expect releases.win.json, so this can never change without breaking
             # auto-update for everyone currently running the widget.
-            echo "app_id=Anemo" >> $env:GITHUB_OUTPUT
-            echo "csproj=Anemo.csproj" >> $env:GITHUB_OUTPUT
-            echo "exe_name=Anemo.exe" >> $env:GITHUB_OUTPUT
+            echo "app_id=Anemo.Widget" >> $env:GITHUB_OUTPUT
+            echo "csproj=Anemo.Widget.csproj" >> $env:GITHUB_OUTPUT
+            echo "exe_name=Anemo.Widget.exe" >> $env:GITHUB_OUTPUT
             echo "version=$($ref -replace '^widget-v', '')" >> $env:GITHUB_OUTPUT
             echo "channel_args=" >> $env:GITHUB_OUTPUT
-            echo "title=Anemo" >> $env:GITHUB_OUTPUT
+            echo "title=Anemo Widget" >> $env:GITHUB_OUTPUT
           } elseif ($ref -like "scanner-v*") {
             # Explicit channel keeps its release feed (releases.scanner.json) from ever
             # being confused with the widget's, since both live in this same repo.

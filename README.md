@@ -21,7 +21,7 @@ From this folder, in a normal (non-admin) terminal:
 dotnet build -c Release
 ```
 
-The exe will land in `bin\Release\net8.0-windows\Anemo.exe`.
+The exe will land in `bin\Release\net8.0-windows\Anemo.Widget.exe`.
 
 ## Publish as a single self-contained exe (recommended for GravityZone)
 
@@ -29,7 +29,7 @@ The exe will land in `bin\Release\net8.0-windows\Anemo.exe`.
 dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
 ```
 
-Output lands in `bin\Release\net8.0-windows\win-x64\publish\Anemo.exe`.
+Output lands in `bin\Release\net8.0-windows\win-x64\publish\Anemo.Widget.exe`.
 This is a real compiled .NET binary rather than a PS2EXE wrapper around a
 script, so it should read very differently to AV heuristics that flag
 PS2EXE-packed executables specifically. If GravityZone still flags it, the

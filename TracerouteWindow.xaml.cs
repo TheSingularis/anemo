@@ -6,7 +6,7 @@ using System.Windows;
 using System.Windows.Input;
 using Anemo.Core;
 
-namespace Anemo
+namespace Anemo.Widget
 {
     public partial class TracerouteWindow : Window
     {

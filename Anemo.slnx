@@ -1,5 +1,5 @@
 <Solution>
   <Project Path="Anemo.Scanner/Anemo.Scanner.csproj" />
   <Project Path="Anemo.Core/Anemo.Core.csproj" />
-  <Project Path="Anemo.csproj" />
+  <Project Path="Anemo.Widget.csproj" />
 </Solution>

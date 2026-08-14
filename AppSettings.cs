@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Text.Json;
 
-namespace Anemo
+namespace Anemo.Widget
 {
     public class AppSettings
     {
@@ -10,7 +10,7 @@ namespace Anemo
 
         private static string FilePath => Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "Anemo", "settings.json");
+            "Anemo.Widget", "settings.json");
 
         public static AppSettings Load()
         {

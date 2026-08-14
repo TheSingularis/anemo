@@ -6,7 +6,7 @@ namespace Anemo.Core
     {
         private bool _closed;
 
-        public UpdateProgressWindow(string appName = "Anemo")
+        public UpdateProgressWindow(string appName = "Anemo Widget")
         {
             InitializeComponent();
 

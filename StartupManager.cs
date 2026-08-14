@@ -1,12 +1,12 @@
 using System.Diagnostics;
 using Microsoft.Win32;
 
-namespace Anemo
+namespace Anemo.Widget
 {
     internal static class StartupManager
     {
         private const string RunKeyPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
-        private const string RunValueName = "Anemo";
+        private const string RunValueName = "Anemo.Widget";
 
         public static bool IsEnabled()
         {

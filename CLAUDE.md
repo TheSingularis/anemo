@@ -2,7 +2,7 @@
 
 This repo hosts two apps that share a common library:
 
-- **Anemo** (`Anemo.csproj`) - the tray widget. Flagship app, keeps the bare product name.
+- **Anemo Widget** (`Anemo.Widget.csproj`) - the tray widget. Flagship app.
 - **Anemo Scanner** (`Anemo.Scanner/`) - a full-size network scanning app.
 - **Anemo.Core** (`Anemo.Core/`) - shared logic (network info, Wi-Fi, ping/port/device
   scanning, traceroute, auto-update, DWM styling). Both apps reference it via
@@ -22,20 +22,23 @@ This repo hosts two apps that share a common library:
 
 ## Naming history
 
-This repo (and the widget's AssemblyName/Velopack AppId) was renamed from `NetworkWidget`
-to `Anemo`, and `NetworkScanner` to `Anemo.Scanner`. This was a deliberate full cutover -
-namespaces, assembly names, and Velopack AppIds all changed together, done early
-specifically to avoid a messier migration later once there's real adoption. One direct
-consequence: any copy of the widget installed *before* the rename has a different Velopack
-AppId than anything shipped after, so it can't auto-update across the rename - a fresh
-manual install is required to get onto the new AppId. There's no ongoing legacy-compat
-concern from this beyond that.
+This repo was renamed from `NetworkWidget` to `Anemo`, and `NetworkScanner` to
+`Anemo.Scanner`. This was a deliberate full cutover - namespaces, assembly names, and
+Velopack AppIds all changed together, done early specifically to avoid a messier migration
+later once there's real adoption. Shortly after, the widget itself was renamed a second
+time from bare `Anemo` to `Anemo.Widget` (csproj, AssemblyName, namespace, and Velopack
+AppId) so its executable name and identity format matches the scanner's (`Anemo.Widget.exe`
+next to `Anemo.Scanner.exe`), done before any real installs existed so there was no
+installed base to orphan. Any copy of the widget installed *before either* rename has a
+different Velopack AppId than anything shipped after, so it can't auto-update across
+either rename - a fresh manual install is required to get onto the current AppId. There's
+no ongoing legacy-compat concern from this beyond that.
 
 ## Auto-update
 
 Both apps auto-update via Velopack, sharing one implementation (`Anemo.Core/AppUpdater.cs` + `UpdateProgressWindow`). They point at the same GitHub repo, but are packaged under **different Velopack channels** so their release feeds never collide:
 
-- Widget: default channel (`win`) - keep it there. Every install from this point forward expects `releases.win.json`; changing it later would silently break auto-update for everyone who installed since the rename, the same way the rename itself just did to pre-rename installs.
+- Widget: default channel (`win`) - keep it there. Every install expects `releases.win.json`; changing it later would silently break auto-update for everyone already on it.
 - Scanner: explicit `scanner` channel (`vpk pack -c scanner`) - produces `releases.scanner.json`, isolated from the widget's feed.
 
 If a third app is ever added to this repo, give it its own distinct channel too.

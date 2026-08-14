@@ -1,7 +1,7 @@
 using System.Windows;
 using Anemo.Core;
 
-namespace Anemo
+namespace Anemo.Widget
 {
     public partial class SettingsWindow : Window
     {

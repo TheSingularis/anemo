@@ -11,7 +11,7 @@ using Anemo.Core;
 using WinForms = System.Windows.Forms;
 using Drawing = System.Drawing;
 
-namespace Anemo
+namespace Anemo.Widget
 {
     public partial class MainWindow : Window
     {
@@ -140,7 +140,7 @@ namespace Anemo
             _trayIcon = new WinForms.NotifyIcon
             {
                 Icon = Drawing.Icon.ExtractAssociatedIcon(Process.GetCurrentProcess().MainModule!.FileName!),
-                Text = "Anemo",
+                Text = "Anemo Widget",
                 Visible = true
             };
 
@@ -173,7 +173,7 @@ namespace Anemo
         {
             _ = AppUpdater.CheckAndApplyAsync(onUpdateApplying: async version =>
             {
-                _trayIcon?.ShowBalloonTip(4000, "Anemo",
+                _trayIcon?.ShowBalloonTip(4000, "Anemo Widget",
                     $"Updating to v{version}, relaunching...", WinForms.ToolTipIcon.Info);
                 // Give the balloon a moment to actually render before the process
                 // restarts out from under it.
@@ -191,7 +191,7 @@ namespace Anemo
             if (_checkingForUpdates) return;
             _checkingForUpdates = true;
 
-            var splash = new UpdateProgressWindow();
+            var splash = new UpdateProgressWindow("Anemo Widget");
             splash.Show();
 
             var (mgr, info) = await AppUpdater.CheckAsync(status => splash.SetStatus(status));

@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using Anemo.Core;
 
-namespace Anemo
+namespace Anemo.Widget
 {
     public partial class App : System.Windows.Application
     {
@@ -51,7 +51,7 @@ namespace Anemo
             // update) or show real download progress before opening (update found).
             // Not folded into MainWindow's own content - they're sequential, not
             // simultaneous, so there's nothing to "merge."
-            var splash = new UpdateProgressWindow();
+            var splash = new UpdateProgressWindow("Anemo Widget");
             splash.Show();
 
             // Only the check itself is time-boxed - if GitHub is slow or unreachable,
