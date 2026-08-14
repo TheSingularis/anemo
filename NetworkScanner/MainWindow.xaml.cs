@@ -211,6 +211,59 @@ namespace NetworkScanner
         }
 
         // -------------------------------------------------------------
+        // Speed Test
+        // -------------------------------------------------------------
+
+        private bool _speedTestRunning;
+
+        private async void btnStartSpeedTest_Click(object sender, RoutedEventArgs e)
+        {
+            if (_speedTestRunning) return;
+            _speedTestRunning = true;
+
+            btnStartSpeedTest.IsEnabled = false;
+            txtDownloadResult.Text = "0.0";
+            txtUploadResult.Text = "0.0";
+            txtPingResult.Text = "--";
+
+            try
+            {
+                txtSpeedStatus.Text = "Finding a server...";
+                var servers = await SpeedTestClient.GetServersAsync();
+                var server = await SpeedTestClient.PickBestServerAsync(servers);
+                if (server == null)
+                {
+                    txtSpeedStatus.Text = "No reachable test server found";
+                    return;
+                }
+
+                txtSpeedStatus.Text = $"Testing against {server.Name}...";
+
+                var ping = await SpeedTestClient.PingTestAsync(server);
+                txtPingResult.Text = ping >= 0 ? $"{ping:0}" : "--";
+
+                txtSpeedStatus.Text = $"Testing download — {server.Name}";
+                var download = await SpeedTestClient.DownloadTestAsync(server, mbps =>
+                    txtDownloadResult.Text = mbps.ToString("0.0"));
+
+                txtSpeedStatus.Text = $"Testing upload — {server.Name}";
+                var upload = await SpeedTestClient.UploadTestAsync(server, mbps =>
+                    txtUploadResult.Text = mbps.ToString("0.0"));
+
+                txtDownloadResult.Text = download.ToString("0.0");
+                txtUploadResult.Text = upload.ToString("0.0");
+                txtSpeedStatus.Text = $"Done — {server.Name}";
+            }
+            catch (Exception ex)
+            {
+                txtSpeedStatus.Text = $"Test failed: {ex.Message}";
+            }
+
+            btnStartSpeedTest.IsEnabled = true;
+            _speedTestRunning = false;
+        }
+
+        // -------------------------------------------------------------
         // Port Scanner
         // -------------------------------------------------------------
 

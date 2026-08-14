@@ -420,21 +420,22 @@
                                     <UniformGrid Columns="3" Rows="1" Width="480">
                                         <StackPanel HorizontalAlignment="Center">
                                             <TextBlock Text="DOWNLOAD" Style="{StaticResource ColHeaderStyle}" HorizontalAlignment="Center"/>
-                                            <TextBlock Text="0.0" Foreground="White" FontSize="36" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,6,0,0"/>
+                                            <TextBlock x:Name="txtDownloadResult" Text="0.0" Foreground="White" FontSize="36" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,6,0,0"/>
                                             <TextBlock Text="Mbps" Foreground="#8A8A8A" FontSize="11" HorizontalAlignment="Center"/>
                                         </StackPanel>
                                         <StackPanel HorizontalAlignment="Center">
                                             <TextBlock Text="UPLOAD" Style="{StaticResource ColHeaderStyle}" HorizontalAlignment="Center"/>
-                                            <TextBlock Text="0.0" Foreground="White" FontSize="36" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,6,0,0"/>
+                                            <TextBlock x:Name="txtUploadResult" Text="0.0" Foreground="White" FontSize="36" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,6,0,0"/>
                                             <TextBlock Text="Mbps" Foreground="#8A8A8A" FontSize="11" HorizontalAlignment="Center"/>
                                         </StackPanel>
                                         <StackPanel HorizontalAlignment="Center">
                                             <TextBlock Text="PING" Style="{StaticResource ColHeaderStyle}" HorizontalAlignment="Center"/>
-                                            <TextBlock Text="--" Foreground="White" FontSize="36" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,6,0,0"/>
+                                            <TextBlock x:Name="txtPingResult" Text="--" Foreground="White" FontSize="36" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,6,0,0"/>
                                             <TextBlock Text="ms" Foreground="#8A8A8A" FontSize="11" HorizontalAlignment="Center"/>
                                         </StackPanel>
                                     </UniformGrid>
-                                    <Button Content="Start Test" Style="{StaticResource AccentButtonStyle}" Width="140" Margin="0,26,0,0"/>
+                                    <Button x:Name="btnStartSpeedTest" Content="Start Test" Style="{StaticResource AccentButtonStyle}" Width="140" Margin="0,26,0,0" Click="btnStartSpeedTest_Click"/>
+                                    <TextBlock x:Name="txtSpeedStatus" Text="" Foreground="#9A9A9A" FontSize="11" HorizontalAlignment="Center" Margin="0,12,0,0"/>
                                 </StackPanel>
                             </Border>
                         </StackPanel>
