@@ -2,15 +2,16 @@ using System;
 using System.IO;
 using System.Text.Json;
 
-namespace Anemo
+namespace Anemo.Scanner
 {
     public class AppSettings
     {
-        public bool StartMinimized { get; set; }
+        public int DefaultPortFrom { get; set; } = 1;
+        public int DefaultPortTo { get; set; } = 1024;
 
         private static string FilePath => Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "Anemo", "settings.json");
+            "Anemo.Scanner", "settings.json");
 
         public static AppSettings Load()
         {

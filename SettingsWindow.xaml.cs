@@ -1,6 +1,7 @@
 using System.Windows;
+using Anemo.Core;
 
-namespace NetworkWidget
+namespace Anemo
 {
     public partial class SettingsWindow : Window
     {

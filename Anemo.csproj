@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>Anemo</AssemblyName>
+    <RootNamespace>Anemo</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>app.ico</ApplicationIcon>
+    <Version>1.3.0</Version>
+    <Company>Jordan</Company>
+    <Product>Anemo</Product>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- ManagedNativeWifi is used by Anemo.Core (WifiInfo.cs) and flows through
+         via the ProjectReference below - no need to also declare it directly here. -->
+    <PackageReference Include="Velopack" Version="1.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="Anemo.Core\Anemo.Core.csproj" />
+  </ItemGroup>
+
+  <!-- This project's own files sit at the repo root alongside the sibling
+       Anemo.Scanner/ and Anemo.Core/ projects, so the default recursive
+       glob would otherwise try to compile their sources into this assembly too. -->
+  <ItemGroup>
+    <Compile Remove="Anemo.Scanner\**" />
+    <Compile Remove="Anemo.Core\**" />
+    <Page Remove="Anemo.Scanner\**" />
+    <Page Remove="Anemo.Core\**" />
+    <ApplicationDefinition Remove="Anemo.Scanner\**" />
+    <None Remove="Anemo.Scanner\**" />
+    <None Remove="Anemo.Core\**" />
+  </ItemGroup>
+
+</Project>

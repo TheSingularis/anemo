@@ -3,15 +3,20 @@ using System.Threading.Tasks;
 using Velopack;
 using Velopack.Sources;
 
-namespace NetworkWidget
+namespace Anemo.Core
 {
-    internal static class AppUpdater
+    // Shared by every app in this repo - they all live in the same GitHub repo/releases
+    // list, but each is packaged under its own Velopack channel (see vpk pack --channel
+    // in the CI workflow), which is what actually keeps their release feeds from
+    // colliding. This class has no app-specific state; the channel isolation happens
+    // entirely on the packaging side.
+    public static class AppUpdater
     {
-        private const string RepoUrl = "https://github.com/TheSingularis/NetworkWidget";
+        private const string RepoUrl = "https://github.com/TheSingularis/anemo";
 
         // Passed back to the relaunched process via restartArgs after an update is
-        // applied, so App.xaml.cs can open straight to the widget instead of running
-        // the check-for-updates flow all over again on a version that was *just* checked.
+        // applied, so the caller can open straight to the app instead of running the
+        // check-for-updates flow all over again on a version that was *just* checked.
         public const string SkipUpdateCheckArg = "--skip-update-check";
 
         // Split from DownloadAndApplyAsync so a caller can time-box just the check
@@ -51,7 +56,7 @@ namespace NetworkWidget
         // onDownloadProgress, if given, is called with 0-100 as the download proceeds.
         // onUpdateApplying, if given, is awaited after the download finishes but before
         // the restart that actually swaps the new version in - the process exits inside
-        // ApplyUpdatesAndRestart, so this is the last chance to tell the user anything.
+        // WaitExitThenApplyUpdates, so this is the last chance to tell the user anything.
         public static async Task DownloadAndApplyAsync(
             UpdateManager mgr,
             UpdateInfo updateInfo,
@@ -90,7 +95,8 @@ namespace NetworkWidget
         }
 
         // Convenience wrapper for callers that don't need to separately time-box the
-        // check phase (the periodic background check, the manual tray click).
+        // check phase (e.g. a periodic background check, a manual "check for updates"
+        // menu click).
         public static async Task CheckAndApplyAsync(
             Action<string>? onStatus = null,
             Action<int>? onDownloadProgress = null,

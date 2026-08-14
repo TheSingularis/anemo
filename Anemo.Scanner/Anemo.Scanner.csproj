@@ -4,21 +4,22 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
-    <UseWindowsForms>true</UseWindowsForms>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <AssemblyName>NetworkWidget</AssemblyName>
-    <RootNamespace>NetworkWidget</RootNamespace>
-    <ApplicationManifest>app.manifest</ApplicationManifest>
-    <ApplicationIcon>app.ico</ApplicationIcon>
-    <Version>1.2.11</Version>
+    <AssemblyName>Anemo.Scanner</AssemblyName>
+    <RootNamespace>Anemo.Scanner</RootNamespace>
+    <ApplicationIcon>..\app.ico</ApplicationIcon>
+    <Version>0.1.0</Version>
     <Company>Jordan</Company>
-    <Product>Network Widget</Product>
+    <Product>Anemo Scanner</Product>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ManagedNativeWifi" Version="3.0.2" />
     <PackageReference Include="Velopack" Version="1.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Anemo.Core\Anemo.Core.csproj" />
   </ItemGroup>
 
 </Project>

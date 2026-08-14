@@ -1,8 +1,9 @@
 using System;
 using System.Threading.Tasks;
 using System.Windows;
+using Anemo.Core;
 
-namespace NetworkWidget
+namespace Anemo
 {
     public partial class App : System.Windows.Application
     {

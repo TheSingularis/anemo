@@ -4,8 +4,9 @@ using System.ComponentModel;
 using System.Threading;
 using System.Windows;
 using System.Windows.Input;
+using Anemo.Core;
 
-namespace NetworkWidget
+namespace Anemo
 {
     public partial class TracerouteWindow : Window
     {
