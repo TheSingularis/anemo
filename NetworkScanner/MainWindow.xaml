@@ -253,7 +253,19 @@
                             <TextBlock Text="Recent Activity" Foreground="#B5B5B5" FontSize="13" FontWeight="SemiBold" Margin="0,26,0,10"/>
                             <Border Style="{StaticResource CardStyle}" Padding="0">
                                 <StackPanel>
-                                    <TextBlock Text="Not wired up yet — will surface notable events (new devices, congestion, failed tests) once Devices/Wi-Fi Analyzer track history." Style="{StaticResource CellStyle}" Foreground="#7A7A7A" Margin="16,12" TextWrapping="Wrap"/>
+                                    <ItemsControl x:Name="activityList">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border BorderBrush="#2E2E2E" BorderThickness="0,0,0,1">
+                                                    <DockPanel Margin="16,12">
+                                                        <TextBlock DockPanel.Dock="Right" Text="{Binding Time}" Foreground="#6A6A6A" FontSize="11" Margin="12,0,0,0"/>
+                                                        <TextBlock Text="{Binding Message}" Style="{StaticResource CellStyle}" TextWrapping="Wrap"/>
+                                                    </DockPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    <TextBlock x:Name="txtNoActivity" Text="Nothing yet — run a scan or test to see it here." Style="{StaticResource CellStyle}" Foreground="#7A7A7A" Margin="16,12"/>
                                 </StackPanel>
                             </Border>
                         </StackPanel>

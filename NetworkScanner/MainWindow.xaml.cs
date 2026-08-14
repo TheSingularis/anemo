@@ -12,10 +12,13 @@ namespace NetworkScanner
 {
     public partial class MainWindow : Window
     {
+        private sealed record ActivityEntry(string Time, string Message);
+
         private readonly ObservableCollection<DiscoveredDevice> _devices = new();
         private readonly ObservableCollection<NearbyNetwork> _networks = new();
         private readonly ObservableCollection<PortResult> _openPorts = new();
         private readonly ObservableCollection<HopResult> _hops = new();
+        private readonly ObservableCollection<ActivityEntry> _activity = new();
 
         private CancellationTokenSource? _devicesCts;
         private CancellationTokenSource? _portsCts;
@@ -31,6 +34,7 @@ namespace NetworkScanner
             networksList.ItemsSource = _networks;
             portsList.ItemsSource = _openPorts;
             hopsList.ItemsSource = _hops;
+            activityList.ItemsSource = _activity;
 
             Loaded += (_, _) => LoadDashboard();
         }
@@ -93,6 +97,16 @@ namespace NetworkScanner
         // Dashboard
         // -------------------------------------------------------------
 
+        // Newest first, capped so the card doesn't grow without bound over a long session.
+        private const int MaxActivityEntries = 20;
+
+        private void LogActivity(string message)
+        {
+            _activity.Insert(0, new ActivityEntry(DateTime.Now.ToString("h:mm tt"), message));
+            while (_activity.Count > MaxActivityEntries) _activity.RemoveAt(_activity.Count - 1);
+            txtNoActivity.Visibility = Visibility.Collapsed;
+        }
+
         private void LoadDashboard()
         {
             var nic = NetworkInfo.GetDefaultInterface();
@@ -144,6 +158,10 @@ namespace NetworkScanner
                     ? $"Cancelled — {_devices.Count} device{(_devices.Count == 1 ? "" : "s")} found"
                     : $"Subnet {details.Ipv4}/{details.SubnetPrefixLength} — {_devices.Count} device{(_devices.Count == 1 ? "" : "s")} found";
                 txtDashDevices.Text = _devices.Count.ToString();
+                if (!_devicesCts.Token.IsCancellationRequested)
+                {
+                    LogActivity($"Device scan found {_devices.Count} device{(_devices.Count == 1 ? "" : "s")} on {details.Ipv4}/{details.SubnetPrefixLength}");
+                }
             }
             catch (Exception ex)
             {
@@ -171,6 +189,7 @@ namespace NetworkScanner
             UpdateChannelChart(networks);
 
             txtWifiStatus.Text = $"{networks.Count} network{(networks.Count == 1 ? "" : "s")} found";
+            LogActivity($"Wi-Fi scan found {networks.Count} nearby network{(networks.Count == 1 ? "" : "s")}");
             btnScanWifi.IsEnabled = true;
         }
 
@@ -253,6 +272,7 @@ namespace NetworkScanner
                 txtDownloadResult.Text = download.ToString("0.0");
                 txtUploadResult.Text = upload.ToString("0.0");
                 txtSpeedStatus.Text = $"Done — {server.Name}";
+                LogActivity($"Speed test: {download:0.#} Mbps down / {upload:0.#} Mbps up / {txtPingResult.Text} ms ping ({server.Name})");
             }
             catch (Exception ex)
             {
@@ -306,6 +326,10 @@ namespace NetworkScanner
                 txtPortsStatus.Text = _portsCts.Token.IsCancellationRequested
                     ? $"Cancelled — {_openPorts.Count} open port{(_openPorts.Count == 1 ? "" : "s")} found"
                     : $"Done — {_openPorts.Count} open port{(_openPorts.Count == 1 ? "" : "s")} found";
+                if (!_portsCts.Token.IsCancellationRequested)
+                {
+                    LogActivity($"Port scan of {target} ({from}-{to}) found {_openPorts.Count} open port{(_openPorts.Count == 1 ? "" : "s")}");
+                }
             }
             catch (Exception ex)
             {
@@ -347,6 +371,10 @@ namespace NetworkScanner
                 txtTraceStatus.Text = _traceCts.Token.IsCancellationRequested
                     ? "Cancelled"
                     : $"Done — {_hops.Count} hop{(_hops.Count == 1 ? "" : "s")}";
+                if (!_traceCts.Token.IsCancellationRequested)
+                {
+                    LogActivity($"Traceroute to {target} completed in {_hops.Count} hop{(_hops.Count == 1 ? "" : "s")}");
+                }
             }
             catch (Exception ex)
             {
