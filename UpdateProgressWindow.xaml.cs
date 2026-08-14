@@ -16,6 +16,16 @@ namespace NetworkWidget
 
         public void SetStatus(string text)
         {
+            // Velopack invokes its progress/status callbacks as plain delegates from
+            // whatever thread is doing the actual download work, not necessarily the UI
+            // thread - unlike IProgress<T>, a raw Action<T> is never auto-marshaled, so
+            // touching UI elements directly here can throw cross-thread and silently
+            // abort whatever loop called us (e.g. cutting a download short mid-stream).
+            if (!Dispatcher.CheckAccess())
+            {
+                Dispatcher.BeginInvoke(() => SetStatus(text));
+                return;
+            }
             if (_closed) return;
             txtStatus.Text = text;
         }
@@ -25,6 +35,11 @@ namespace NetworkWidget
         // "still working" indicator for the checking/installing phases either side of it.
         public void SetProgress(int percent)
         {
+            if (!Dispatcher.CheckAccess())
+            {
+                Dispatcher.BeginInvoke(() => SetProgress(percent));
+                return;
+            }
             if (_closed) return;
             progressTrack.Visibility = Visibility.Visible;
             progressFill.Width = progressTrack.ActualWidth * System.Math.Clamp(percent, 0, 100) / 100.0;
