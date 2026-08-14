@@ -9,6 +9,11 @@ namespace NetworkWidget
     {
         private const string RepoUrl = "https://github.com/TheSingularis/NetworkWidget";
 
+        // Passed back to the relaunched process via restartArgs after an update is
+        // applied, so App.xaml.cs can open straight to the widget instead of running
+        // the check-for-updates flow all over again on a version that was *just* checked.
+        public const string SkipUpdateCheckArg = "--skip-update-check";
+
         // Split from DownloadAndApplyAsync so a caller can time-box just the check
         // (e.g. don't hold up app startup more than a few seconds if GitHub is slow)
         // while still letting an in-progress download run to completion once one is
@@ -65,7 +70,17 @@ namespace NetworkWidget
                     await onUpdateApplying(updateInfo.TargetFullRelease.Version.ToString());
                 }
 
-                mgr.ApplyUpdatesAndRestart(updateInfo.TargetFullRelease);
+                // silent: true suppresses Velopack's own native progress window - our
+                // splash already shows status/progress, so that second window was just
+                // a redundant, jarring extra step. WaitExitThenApplyUpdates (unlike
+                // ApplyUpdatesAndRestart) doesn't exit the process for us, so we do
+                // that explicitly right after.
+                mgr.WaitExitThenApplyUpdates(
+                    updateInfo.TargetFullRelease,
+                    silent: true,
+                    restart: true,
+                    restartArgs: new[] { SkipUpdateCheckArg });
+                System.Windows.Application.Current.Shutdown();
             }
             catch (Exception ex)
             {

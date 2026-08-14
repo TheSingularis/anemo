@@ -18,6 +18,11 @@ namespace NetworkWidget
         {
             base.OnStartup(e);
 
+            // This is a relaunch right after an update was just applied (see
+            // AppUpdater.SkipUpdateCheckArg) - the version we'd be checking against was
+            // the one we're now running, so skip straight to opening.
+            bool skipUpdateCheck = Array.IndexOf(e.Args, AppUpdater.SkipUpdateCheckArg) >= 0;
+
             // "Start minimized" is a persisted preference (set from the Settings pane),
             // not a launch flag, so it applies whether the app was auto-started or opened
             // by hand.
@@ -26,8 +31,18 @@ namespace NetworkWidget
             {
                 // No window to show progress in - check silently in the background,
                 // same as the periodic 6h re-check does.
-                _ = AppUpdater.CheckAndApplyAsync();
+                if (!skipUpdateCheck)
+                {
+                    _ = AppUpdater.CheckAndApplyAsync();
+                }
                 new MainWindow();
+                return;
+            }
+
+            if (skipUpdateCheck)
+            {
+                var freshWindow = new MainWindow();
+                freshWindow.Show();
                 return;
             }
 
