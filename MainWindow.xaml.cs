@@ -3,13 +3,10 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
-using System.Net.NetworkInformation;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
-using ManagedNativeWifi;
 using NetworkWidget.Core;
 using WinForms = System.Windows.Forms;
 using Drawing = System.Drawing;
@@ -305,7 +302,7 @@ namespace NetworkWidget
         // changes, since byte counts aren't comparable across different adapters.
         private void UpdateTraffic()
         {
-            var nic = GetActiveInterfaces().FirstOrDefault(n => n.Id == _selectedAdapterId);
+            var nic = NetworkInfo.GetActiveInterfaces().FirstOrDefault(n => n.Id == _selectedAdapterId);
             if (nic == null)
             {
                 txtDownload.Text = "-";
@@ -399,9 +396,9 @@ namespace NetworkWidget
         // slower 30s _connectivityTimer rather than the 5s local-info timer.
         private async Task UpdateConnectivityAsync()
         {
-            var gatewayTask = PingAsync(_currentGatewayAddress);
-            var internetTask = PingAsync("1.1.1.1");
-            var publicIpTask = GetPublicIpAsync();
+            var gatewayTask = Connectivity.PingAsync(_currentGatewayAddress);
+            var internetTask = Connectivity.PingAsync("1.1.1.1");
+            var publicIpTask = Connectivity.GetPublicIpAsync(_http);
 
             await Task.WhenAll(gatewayTask, internetTask, publicIpTask);
 
@@ -427,56 +424,11 @@ namespace NetworkWidget
                 : DefaultValueBrush;
         }
 
-        private static async Task<string> PingAsync(string? host)
-        {
-            if (string.IsNullOrEmpty(host)) return "-";
-
-            try
-            {
-                using var ping = new Ping();
-                var reply = await ping.SendPingAsync(host, 1500);
-                return reply.Status == IPStatus.Success ? $"{reply.RoundtripTime} ms" : "unreachable";
-            }
-            catch
-            {
-                return "-";
-            }
-        }
-
-        private static async Task<string> GetPublicIpAsync()
-        {
-            try
-            {
-                var ip = await _http.GetStringAsync("https://api.ipify.org");
-                return ip.Trim();
-            }
-            catch
-            {
-                return "-";
-            }
-        }
-
-        private static System.Collections.Generic.IEnumerable<NetworkInterface> GetActiveInterfaces() =>
-            NetworkInterface.GetAllNetworkInterfaces()
-                .Where(n => n.OperationalStatus == OperationalStatus.Up
-                            && n.NetworkInterfaceType != NetworkInterfaceType.Loopback
-                            // Hyper-V virtual switches ("vEthernet (...)") clutter the
-                            // adapter list without being anything a user would pick.
-                            && !n.Name.StartsWith("vEthernet", StringComparison.OrdinalIgnoreCase));
-
-        private static int AdapterTypePriority(NetworkInterface nic) => nic.NetworkInterfaceType switch
-        {
-            NetworkInterfaceType.Ethernet or NetworkInterfaceType.GigabitEthernet
-                or NetworkInterfaceType.FastEthernetT or NetworkInterfaceType.FastEthernetFx => 0,
-            NetworkInterfaceType.Wireless80211 => 1,
-            _ => 2,
-        };
-
         // Keeps the dropdown in sync with whatever adapters are currently up, without
         // clobbering the user's selection on every 5s tick unless it's no longer valid.
         private void UpdateAdapterList()
         {
-            var options = GetActiveInterfaces()
+            var options = NetworkInfo.GetActiveInterfaces()
                 .Select(n => new AdapterOption { Id = n.Id, Name = n.Name })
                 .ToList();
 
@@ -493,12 +445,7 @@ namespace NetworkWidget
                 // over wireless - matches how Windows itself deprioritizes WiFi once a
                 // cable is plugged in, so this naturally tracks "the one really in use"
                 // rather than whatever GetAllNetworkInterfaces() happens to list first.
-                var defaultNic = GetActiveInterfaces()
-                    .Where(n => n.GetIPProperties().GatewayAddresses
-                        .Any(g => g.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork))
-                    .OrderBy(AdapterTypePriority)
-                    .FirstOrDefault();
-                _selectedAdapterId = defaultNic?.Id ?? options[0].Id;
+                _selectedAdapterId = NetworkInfo.GetDefaultInterface()?.Id ?? options[0].Id;
             }
 
             cmbAdapter.ItemsSource = options;
@@ -516,7 +463,7 @@ namespace NetworkWidget
 
         private void UpdateIpInfo()
         {
-            var nic = GetActiveInterfaces().FirstOrDefault(n => n.Id == _selectedAdapterId);
+            var nic = NetworkInfo.GetActiveInterfaces().FirstOrDefault(n => n.Id == _selectedAdapterId);
 
             if (nic == null)
             {
@@ -530,92 +477,32 @@ namespace NetworkWidget
                 return;
             }
 
-            var props = nic.GetIPProperties();
-            var v4 = props.UnicastAddresses
-                .FirstOrDefault(a => a.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
-            var gateway = props.GatewayAddresses
-                .FirstOrDefault(g => g.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork);
-            var dnsServers = props.DnsAddresses
-                .Where(d => d.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
-                .Select(d => d.ToString());
+            var details = NetworkInfo.GetAdapterDetails(nic);
 
-            txtLinkSpeed.Text = FormatLinkSpeed(nic.Speed);
-            txtIPv4.Text = v4?.Address.ToString() ?? "-";
-            txtSubnet.Text = $"/{v4?.PrefixLength ?? 0}";
-            txtGateway.Text = gateway?.Address.ToString() ?? "-";
-            txtDNS.Text = string.Join(", ", dnsServers);
-            txtMAC.Text = FormatMac(nic.GetPhysicalAddress().ToString());
+            txtLinkSpeed.Text = details.LinkSpeedText;
+            txtIPv4.Text = details.Ipv4;
+            txtSubnet.Text = $"/{details.SubnetPrefixLength}";
+            txtGateway.Text = details.Gateway ?? "-";
+            txtDNS.Text = string.Join(", ", details.DnsServers);
+            txtMAC.Text = details.Mac;
 
-            _currentGatewayAddress = gateway?.Address.ToString();
-        }
-
-        private static string FormatLinkSpeed(long bitsPerSecond)
-        {
-            if (bitsPerSecond <= 0) return "-";
-            double mbps = bitsPerSecond / 1_000_000.0;
-            return mbps >= 1000 ? $"{mbps / 1000.0:0.#} Gbps" : $"{mbps:0} Mbps";
-        }
-
-        private static string FormatMac(string raw)
-        {
-            if (string.IsNullOrEmpty(raw) || raw.Length != 12) return raw;
-            return string.Join(":", Enumerable.Range(0, 6).Select(i => raw.Substring(i * 2, 2)));
+            _currentGatewayAddress = details.Gateway;
         }
 
         private void UpdateWifiInfo()
         {
-            var output = RunCommand("netsh", "wlan show interfaces");
-            var props = ParseNetshBlock(output);
-
-            bool connected = props.TryGetValue("State", out var state)
-                && state.Equals("connected", StringComparison.OrdinalIgnoreCase);
+            var wifi = WifiInfo.GetCurrent();
 
             // Collapsed rather than shown-with-dashes when not connected via WiFi (e.g.
             // on Ethernet) - otherwise the section is just dead space in the widget.
-            wifiSection.Visibility = connected ? Visibility.Visible : Visibility.Collapsed;
-            if (!connected) return;
+            wifiSection.Visibility = wifi.Connected ? Visibility.Visible : Visibility.Collapsed;
+            if (!wifi.Connected) return;
 
-            txtSSID.Text = props.GetValueOrDefault("SSID", "-");
-            txtSignal.Text = props.GetValueOrDefault("Signal", "-");
-            txtRSSI.Text = GetRssiText();
-            txtChannel.Text = props.GetValueOrDefault("Channel", "-");
-            txtRadio.Text = props.GetValueOrDefault("Radio type", "-");
-        }
-
-        // netsh only exposes signal strength as a %; the real dBm figure comes from the
-        // WLAN BSS list via the Native Wifi API, so query that directly instead of
-        // approximating dBm from the percentage.
-        private static string GetRssiText()
-        {
-            try
-            {
-                var iface = NativeWifi.EnumerateInterfaces()
-                    .FirstOrDefault(i => i.State == InterfaceState.Connected);
-                if (iface == null) return "-";
-
-                var (result, rssi) = NativeWifi.GetRssi(iface.Id);
-                return result == ActionResult.Success ? $"{rssi} dBm" : "-";
-            }
-            catch
-            {
-                return "-";
-            }
-        }
-
-        private static System.Collections.Generic.Dictionary<string, string> ParseNetshBlock(string raw)
-        {
-            var result = new System.Collections.Generic.Dictionary<string, string>();
-            foreach (var line in raw.Split('\n'))
-            {
-                var m = Regex.Match(line, @"^\s+(?<name>[^:]+):\s?(?<value>.*)$");
-                if (m.Success)
-                {
-                    var key = m.Groups["name"].Value.Trim();
-                    var val = m.Groups["value"].Value.Trim();
-                    if (!result.ContainsKey(key)) result[key] = val;
-                }
-            }
-            return result;
+            txtSSID.Text = wifi.Ssid;
+            txtSignal.Text = wifi.SignalPercent;
+            txtRSSI.Text = wifi.RssiText;
+            txtChannel.Text = wifi.Channel;
+            txtRadio.Text = wifi.RadioType;
         }
 
         private static string RunCommand(string fileName, string arguments)
