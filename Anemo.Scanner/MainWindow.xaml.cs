@@ -366,24 +366,31 @@ namespace Anemo.Scanner
             txtPortsStatus.Text = $"Scanning {target}:{from}-{to}...";
 
             _portsCts = new CancellationTokenSource();
+            var token = _portsCts.Token;
+
             try
             {
-                await PortScan.ScanAsync(target, from, to, result =>
+                // Runs on a thread-pool thread so the burst of concurrent socket attempts
+                // never ties up the UI thread - switching tabs mid-scan used to freeze the
+                // window because that work (and every per-port result) was running inline
+                // on the UI thread's own context. Only the per-result UI touch below is
+                // marshaled back via Dispatcher.
+                await Task.Run(() => PortScan.ScanAsync(target, from, to, result =>
                 {
-                    if (result.IsOpen)
+                    if (!result.IsOpen) return;
+                    Dispatcher.BeginInvoke(() =>
                     {
                         _openPorts.Add(result);
                         txtPortsStatus.Text = $"Scanning {target}:{from}-{to}... {_openPorts.Count} open";
-                    }
-                }, _portsCts.Token);
+                    });
+                }, token));
 
-                txtPortsStatus.Text = _portsCts.Token.IsCancellationRequested
-                    ? $"Cancelled — {_openPorts.Count} open port{(_openPorts.Count == 1 ? "" : "s")} found"
-                    : $"Done — {_openPorts.Count} open port{(_openPorts.Count == 1 ? "" : "s")} found";
-                if (!_portsCts.Token.IsCancellationRequested)
-                {
-                    LogActivity($"Port scan of {target} ({from}-{to}) found {_openPorts.Count} open port{(_openPorts.Count == 1 ? "" : "s")}");
-                }
+                txtPortsStatus.Text = $"Done — {_openPorts.Count} open port{(_openPorts.Count == 1 ? "" : "s")} found";
+                LogActivity($"Port scan of {target} ({from}-{to}) found {_openPorts.Count} open port{(_openPorts.Count == 1 ? "" : "s")}");
+            }
+            catch (OperationCanceledException)
+            {
+                txtPortsStatus.Text = $"Cancelled — {_openPorts.Count} open port{(_openPorts.Count == 1 ? "" : "s")} found";
             }
             catch (Exception ex)
             {
