@@ -488,6 +488,7 @@ namespace Anemo.Widget
             txtRSSI.Text = wifi.RssiText;
             txtChannel.Text = wifi.Channel;
             txtRadio.Text = wifi.RadioType;
+            txtSecurity.Text = wifi.Authentication;
         }
 
         private static string RunCommand(string fileName, string arguments)

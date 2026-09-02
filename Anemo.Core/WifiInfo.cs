@@ -13,7 +13,8 @@ namespace Anemo.Core
         string SignalPercent,
         string RssiText,
         string Channel,
-        string RadioType);
+        string RadioType,
+        string Authentication);
 
     public sealed record NearbyNetwork(
         string Ssid,
@@ -37,7 +38,7 @@ namespace Anemo.Core
 
             if (!connected)
             {
-                return new CurrentWifiInfo(false, "-", "-", "-", "-", "-");
+                return new CurrentWifiInfo(false, "-", "-", "-", "-", "-", "-");
             }
 
             return new CurrentWifiInfo(
@@ -46,7 +47,8 @@ namespace Anemo.Core
                 SignalPercent: props.GetValueOrDefault("Signal", "-"),
                 RssiText: GetRssiText(),
                 Channel: props.GetValueOrDefault("Channel", "-"),
-                RadioType: props.GetValueOrDefault("Radio type", "-"));
+                RadioType: props.GetValueOrDefault("Radio type", "-"),
+                Authentication: props.GetValueOrDefault("Authentication", "-"));
         }
 
         private static string GetRssiText()

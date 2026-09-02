@@ -227,6 +227,7 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
                 <TextBlock Grid.Row="0" Grid.Column="0" Text="SSID" Style="{StaticResource RowLabelStyle}"/>
@@ -243,6 +244,9 @@
 
                 <TextBlock Grid.Row="4" Grid.Column="0" Text="Radio" Style="{StaticResource RowLabelStyle}"/>
                 <TextBlock x:Name="txtRadio" Grid.Row="4" Grid.Column="1" Text="-" Style="{StaticResource RowValueStyle}"/>
+
+                <TextBlock Grid.Row="5" Grid.Column="0" Text="Security" Style="{StaticResource RowLabelStyle}"/>
+                <TextBlock x:Name="txtSecurity" Grid.Row="5" Grid.Column="1" Text="-" Style="{StaticResource RowValueStyle}"/>
             </Grid>
         </StackPanel>
 
