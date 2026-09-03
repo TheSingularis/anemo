@@ -35,15 +35,34 @@ namespace Anemo.Core
         // Prefers whichever of Ethernet/WiFi actually has a working route, wired over
         // wireless - matches how Windows itself deprioritizes WiFi once a cable is
         // plugged in, so this naturally tracks "the one really in use" rather than
-        // whatever GetAllNetworkInterfaces() happens to list first.
+        // whatever GetAllNetworkInterfaces() happens to list first. A physical
+        // Ethernet/WiFi adapter is always preferred over anything else (Tailscale, other
+        // VPN tunnels, virtual switches) even if the virtual one happens to carry a
+        // default route - e.g. Tailscale in exit-node mode adds one - since a VPN
+        // shouldn't silently become "the" connection just because it's running.
+        // Non-physical adapters are only picked as a last resort, when no physical one
+        // has an IP at all.
         public static NetworkInterface? GetDefaultInterface()
         {
             var active = GetActiveInterfaces().ToList();
-            var withGateway = active
+            var physical = active.Where(n => AdapterTypePriority(n) <= 1).ToList();
+
+            var physicalWithGateway = physical
                 .Where(n => n.GetIPProperties().GatewayAddresses.Any(g => g.Address.AddressFamily == AddressFamily.InterNetwork))
                 .OrderBy(AdapterTypePriority)
                 .FirstOrDefault();
-            return withGateway ?? active.FirstOrDefault();
+            if (physicalWithGateway != null) return physicalWithGateway;
+
+            var anyPhysicalWithIp = physical
+                .Where(n => n.GetIPProperties().UnicastAddresses.Any(a => a.Address.AddressFamily == AddressFamily.InterNetwork))
+                .OrderBy(AdapterTypePriority)
+                .FirstOrDefault();
+            if (anyPhysicalWithIp != null) return anyPhysicalWithIp;
+
+            var other = active.Except(physical).ToList();
+            return other.FirstOrDefault(n => n.GetIPProperties().GatewayAddresses.Any(g => g.Address.AddressFamily == AddressFamily.InterNetwork))
+                ?? other.FirstOrDefault(n => n.GetIPProperties().UnicastAddresses.Any(a => a.Address.AddressFamily == AddressFamily.InterNetwork))
+                ?? active.FirstOrDefault();
         }
 
         public static AdapterDetails GetAdapterDetails(NetworkInterface nic)
