@@ -41,6 +41,7 @@ jobs:
           name: Anemo.Widget-win-x64
           path: publish-widget/Anemo.Widget.exe
           if-no-files-found: error
+          retention-days: 7
 
       - name: Publish scanner (sanity build)
         if: github.ref == 'refs/heads/dev'
@@ -56,6 +57,7 @@ jobs:
           name: Anemo.Scanner-win-x64
           path: publish-scanner/Anemo.Scanner.exe
           if-no-files-found: error
+          retention-days: 7
 
       # Everything below only runs for a tagged release, since Velopack packaging
       # (Setup.exe + portable zip + update feed) is only meaningful for a real
