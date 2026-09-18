@@ -413,7 +413,9 @@ namespace Anemo.Widget
         // clobbering the user's selection on every 5s tick unless it's no longer valid.
         private void UpdateAdapterList()
         {
+            var excluded = AppSettings.Load().ExcludedAdapterIds;
             var options = NetworkInfo.GetActiveInterfaces()
+                .Where(n => !excluded.Contains(n.Id))
                 .Select(n => new AdapterOption { Id = n.Id, Name = n.Name })
                 .ToList();
 
