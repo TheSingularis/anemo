@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 
@@ -7,6 +8,10 @@ namespace Anemo.Widget
     public class AppSettings
     {
         public bool StartMinimized { get; set; }
+
+        // NetworkInterface.Id (a stable per-adapter GUID) rather than Name, so a rename
+        // doesn't silently un-exclude an adapter the user picked, e.g. Tailscale.
+        public List<string> ExcludedAdapterIds { get; set; } = new();
 
         private static string FilePath => Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),

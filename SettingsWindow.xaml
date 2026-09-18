@@ -89,6 +89,23 @@
 
                 <Separator Margin="0,12" Background="#3A3A3A"/>
 
+                <TextBlock Text="EXCLUDE FROM ADAPTER LIST" Foreground="#8A8A8A" FontSize="10"
+                           FontWeight="SemiBold" Margin="0,0,0,4"/>
+                <ItemsControl x:Name="adapterExclusionList">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <CheckBox Content="{Binding Name}" Tag="{Binding Id}"
+                                      IsChecked="{Binding IsExcluded, Mode=OneWay}"
+                                      Style="{StaticResource ToggleCheckBoxStyle}"
+                                      Checked="chkExcludeAdapter_Changed" Unchecked="chkExcludeAdapter_Changed"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock x:Name="txtNoAdapters" Text="No adapters detected" Foreground="#666666" FontSize="11"
+                           Margin="0,6" Visibility="Collapsed"/>
+
+                <Separator Margin="0,12" Background="#3A3A3A"/>
+
                 <TextBlock x:Name="txtVersion" Text="Version -" Foreground="#666666" FontSize="10"
                            HorizontalAlignment="Center"/>
             </StackPanel>
