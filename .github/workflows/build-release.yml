@@ -116,10 +116,44 @@ jobs:
           -p publish -e ${{ steps.target.outputs.exe_name }} -o velopack-release --icon app.ico
           ${{ steps.target.outputs.channel_args }}
 
+      # Release notes come from CHANGELOG.md, not GitHub's auto-generated commit list -
+      # keeps every release's notes readable and curated instead of a raw commit dump.
+      # Fails loudly if the tagged version has no matching entry, since that means
+      # CHANGELOG.md wasn't updated as part of cutting this release.
+      - name: Extract changelog section for this release
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        run: |
+          $app = "${{ steps.target.outputs.title }}"
+          $version = "${{ steps.target.outputs.version }}"
+          $lines = Get-Content CHANGELOG.md
+          $inApp = $false
+          $inVersion = $false
+          $notes = New-Object System.Collections.Generic.List[string]
+          foreach ($line in $lines) {
+            if (-not $inApp) {
+              if ($line -eq "## $app") { $inApp = $true }
+              continue
+            }
+            if ($line -match '^## ') { break }
+            if (-not $inVersion) {
+              if ($line -match "^### $([regex]::Escape($version))( - |$)") { $inVersion = $true }
+              continue
+            }
+            if ($line -match '^### ') { break }
+            $notes.Add($line)
+          }
+          $text = ($notes -join "`n").Trim()
+          if ([string]::IsNullOrWhiteSpace($text)) {
+            Write-Error "No CHANGELOG.md entry found under '## $app' for version '$version' - add one before tagging."
+            exit 1
+          }
+          Set-Content -Path release-notes.md -Value $text -Encoding utf8
+
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: >
           gh release create ${{ github.ref_name }} velopack-release/*
-          --title "${{ steps.target.outputs.title }} ${{ github.ref_name }}" --generate-notes
+          --title "${{ steps.target.outputs.title }} ${{ github.ref_name }}" --notes-file release-notes.md
