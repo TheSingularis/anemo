@@ -8,7 +8,7 @@ Dates are release dates, in UTC.
 
 > Shipped as **NetworkWidget** prior to 1.3.0 - see [Renamed](#renamed) below.
 
-### 1.4.0 - 2026-09-28
+### 1.3.3 - 2026-09-28
 
 #### Added
 - Set Static IP: assign a manual IP/subnet (and optional gateway) to the selected
@@ -75,11 +75,6 @@ Anemo rebrand.
   self-contained exe and publish a release on version tags.
 
 ## Anemo Scanner
-
-### 1.4.0 - 2026-09-28
-
-Version-only bump to keep major.minor aligned with Anemo Widget's 1.4.0 (see
-[CLAUDE.md](CLAUDE.md)) - no functional changes in this app.
 
 ### 1.3.2 - 2026-09-18
 
