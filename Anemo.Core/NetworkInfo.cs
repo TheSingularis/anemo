@@ -96,5 +96,40 @@ namespace Anemo.Core
             if (string.IsNullOrEmpty(raw) || raw.Length != 12) return raw;
             return string.Join(":", Enumerable.Range(0, 6).Select(i => raw.Substring(i * 2, 2)));
         }
+
+        // Accepts "ip/prefix" (e.g. "192.168.1.50/24") - the format users naturally type
+        // for a manual static-IP assignment, rather than making them split IP and subnet
+        // mask across separate fields.
+        public static bool TryParseCidr(string input, out System.Net.IPAddress address, out int prefixLength)
+        {
+            address = System.Net.IPAddress.None;
+            prefixLength = 0;
+
+            if (string.IsNullOrWhiteSpace(input)) return false;
+
+            var parts = input.Trim().Split('/');
+            if (parts.Length != 2) return false;
+
+            if (!System.Net.IPAddress.TryParse(parts[0].Trim(), out var ip) || ip.AddressFamily != AddressFamily.InterNetwork)
+                return false;
+            if (!int.TryParse(parts[1].Trim(), out var prefix) || prefix < 0 || prefix > 32)
+                return false;
+
+            address = ip;
+            prefixLength = prefix;
+            return true;
+        }
+
+        // netsh (and most network config surfaces) still wants a dotted subnet mask
+        // rather than a CIDR prefix length, so static-IP assignment needs this conversion.
+        public static string PrefixLengthToSubnetMask(int prefixLength)
+        {
+            if (prefixLength < 0 || prefixLength > 32)
+                throw new ArgumentOutOfRangeException(nameof(prefixLength), "Prefix length must be between 0 and 32.");
+
+            uint mask = prefixLength == 0 ? 0u : 0xFFFFFFFFu << (32 - prefixLength);
+            var bytes = new byte[] { (byte)(mask >> 24), (byte)(mask >> 16), (byte)(mask >> 8), (byte)mask };
+            return new System.Net.IPAddress(bytes).ToString();
+        }
     }
 }
