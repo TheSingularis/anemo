@@ -8,6 +8,14 @@ Dates are release dates, in UTC.
 
 > Shipped as **NetworkWidget** prior to 1.3.0 - see [Renamed](#renamed) below.
 
+### 1.3.3 - 2026-09-28
+
+#### Added
+- Set Static IP: assign a manual IP/subnet (and optional gateway) to the selected
+  adapter, to reach devices that require a fixed static-IP peer. Elevated the same way
+  as Release & Renew (a one-time UAC prompt), with a Restore Automatic (DHCP) button to
+  revert.
+
 ### 1.3.2 - 2026-09-18
 
 #### Fixed

@@ -493,26 +493,10 @@ namespace Anemo.Widget
             txtSecurity.Text = wifi.Authentication;
         }
 
-        private static string RunCommand(string fileName, string arguments)
-        {
-            var psi = new ProcessStartInfo
-            {
-                FileName = fileName,
-                Arguments = arguments,
-                RedirectStandardOutput = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-            using var proc = Process.Start(psi);
-            string output = proc!.StandardOutput.ReadToEnd();
-            proc.WaitForExit();
-            return output;
-        }
-
         // -------------------------------------------------------------
-        // Release & Renew (elevated via a pre-registered Scheduled Task,
-        // so only the one-time task registration prompts for UAC - not
-        // every click)
+        // Release & Renew (elevated via ElevatedTaskRunner - a pre-registered
+        // Scheduled Task, so only the one-time task registration prompts for
+        // UAC, not every click)
         // -------------------------------------------------------------
 
         private const string RenewTaskName = "Anemo_ReleaseRenew";
@@ -541,32 +525,18 @@ namespace Anemo.Widget
                 //
                 // The script's content (which adapter it targets) is rewritten on every
                 // click - only the scheduled task itself is a one-time, admin-gated setup.
-                bool registered = await System.Threading.Tasks.Task.Run(() =>
+                bool ran = await System.Threading.Tasks.Task.Run(() =>
                 {
-                    WriteRenewScript(adapterName);
-                    return EnsureRenewTaskRegistered();
+                    ElevatedTaskRunner.WriteScript(RenewScriptPath, BuildRenewScript(adapterName));
+                    return ElevatedTaskRunner.EnsureRegisteredAndRun(RenewTaskName, RenewScriptPath);
                 });
-                if (!registered)
+                if (!ran)
                 {
                     txtStatus.Foreground = System.Windows.Media.Brushes.Red;
                     txtStatus.Text = "Setup cancelled";
                     btnRenew.IsEnabled = true;
                     return;
                 }
-
-                await System.Threading.Tasks.Task.Run(() =>
-                {
-                    RunCommand("schtasks", $"/run /tn \"{RenewTaskName}\"");
-
-                    // schtasks /run queues the task and returns immediately, so poll
-                    // until it's no longer "Running" before refreshing (max ~15s).
-                    for (int i = 0; i < 30; i++)
-                    {
-                        System.Threading.Thread.Sleep(500);
-                        var status = RunCommand("schtasks", $"/query /tn \"{RenewTaskName}\" /fo LIST");
-                        if (!status.Contains("Running", StringComparison.OrdinalIgnoreCase)) break;
-                    }
-                });
 
                 txtStatus.Foreground = System.Windows.Media.Brushes.LightGreen;
                 txtStatus.Text = "Renewed successfully";
@@ -581,63 +551,43 @@ namespace Anemo.Widget
             RefreshNetworkInfo();
         }
 
-        private static bool RenewTaskExists()
-        {
-            var psi = new ProcessStartInfo
-            {
-                FileName = "schtasks",
-                Arguments = $"/query /tn \"{RenewTaskName}\"",
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true
-            };
-            using var proc = Process.Start(psi);
-            proc!.WaitForExit();
-            return proc.ExitCode == 0;
-        }
-
         // Redirection/&&/quoting doesn't survive being embedded inline in schtasks' /tr
         // value, so the release/renew logic lives in a script file instead and /tr just
         // points at that single, stable path - only the file's content changes per click.
-        private static void WriteRenewScript(string adapterName)
+        private static string BuildRenewScript(string adapterName) =>
+            "@echo off\r\n" +
+            $"ipconfig /release \"{adapterName}\" > \"{RenewLogPath}\" 2>&1\r\n" +
+            $"ipconfig /renew \"{adapterName}\" >> \"{RenewLogPath}\" 2>&1\r\n";
+
+        // -------------------------------------------------------------
+        // Set Static IP
+        // -------------------------------------------------------------
+
+        private void btnStaticIp_Click(object sender, RoutedEventArgs e)
         {
-            System.IO.File.WriteAllText(RenewScriptPath,
-                "@echo off\r\n" +
-                $"ipconfig /release \"{adapterName}\" > \"{RenewLogPath}\" 2>&1\r\n" +
-                $"ipconfig /renew \"{adapterName}\" >> \"{RenewLogPath}\" 2>&1\r\n");
-        }
-
-        private static bool EnsureRenewTaskRegistered()
-        {
-            if (RenewTaskExists()) return true;
-
-            // /sc ONCE with a start date far in the past registers the task without
-            // it ever firing on its own; it only runs when triggered via /run. The
-            // doubled inner quotes around the path are schtasks' documented syntax
-            // for a /tr target whose path may contain spaces.
-            var createArgs = $"/create /tn \"{RenewTaskName}\" /tr \"\\\"{RenewScriptPath}\\\"\" /sc ONCE /sd 01/01/2020 /st 00:00 /rl HIGHEST /f";
-
-            var psi = new ProcessStartInfo
+            var adapterName = (cmbAdapter.SelectedItem as AdapterOption)?.Name;
+            if (adapterName == null)
             {
-                FileName = "schtasks",
-                Arguments = createArgs,
-                UseShellExecute = true,
-                Verb = "runas",
-                WindowStyle = ProcessWindowStyle.Hidden
-            };
-
-            try
-            {
-                using var proc = Process.Start(psi);
-                proc!.WaitForExit();
-                return proc.ExitCode == 0;
+                txtStatus.Foreground = System.Windows.Media.Brushes.Red;
+                txtStatus.Text = "No adapter selected";
+                return;
             }
-            catch (System.ComponentModel.Win32Exception)
+
+            // Prefill from the adapter's current config so the dialog opens with
+            // something sensible to edit rather than a blank/placeholder guess.
+            var nic = NetworkInfo.GetActiveInterfaces().FirstOrDefault(n => n.Id == _selectedAdapterId);
+            string? currentCidr = null;
+            string? currentGateway = null;
+            if (nic != null)
             {
-                // UAC prompt was cancelled
-                return false;
+                var details = NetworkInfo.GetAdapterDetails(nic);
+                if (details.Ipv4 != "-") currentCidr = $"{details.Ipv4}/{details.SubnetPrefixLength}";
+                currentGateway = details.Gateway;
             }
+
+            var dialog = new StaticIpWindow(adapterName, currentCidr, currentGateway) { Owner = this };
+            dialog.ShowDialog();
+            RefreshNetworkInfo();
         }
     }
 }
