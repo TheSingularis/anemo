@@ -99,7 +99,7 @@ namespace Anemo.Core
             }
         }
 
-        private static Dictionary<string, string> ParseNetshBlock(string raw)
+        internal static Dictionary<string, string> ParseNetshBlock(string raw)
         {
             var result = new Dictionary<string, string>();
             foreach (var line in raw.Split('\n'))

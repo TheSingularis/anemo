@@ -32,11 +32,13 @@
   <ItemGroup>
     <Compile Remove="Anemo.Scanner\**" />
     <Compile Remove="Anemo.Core\**" />
+    <Compile Remove="Anemo.Core.Tests\**" />
     <Page Remove="Anemo.Scanner\**" />
     <Page Remove="Anemo.Core\**" />
     <ApplicationDefinition Remove="Anemo.Scanner\**" />
     <None Remove="Anemo.Scanner\**" />
     <None Remove="Anemo.Core\**" />
+    <None Remove="Anemo.Core.Tests\**" />
   </ItemGroup>
 
 </Project>
