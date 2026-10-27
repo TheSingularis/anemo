@@ -18,6 +18,19 @@ Dates are release dates, in UTC.
 - The widget now reports a real failure when the elevated command fails, instead of always
   showing success.
 
+### 1.3.4 - 2026-10-27
+
+#### Added
+- The WiFi section now shows the connected access point: its name when the AP broadcasts
+  one (UniFi with "Show AP Name in Beacon" on, Cisco/Meraki, Aruba, Ruckus, Mist, Fortinet,
+  Arista, Aerohive, Extreme, Huawei, Alcatel-Lucent and Belden), otherwise its
+  manufacturer, plus its BSSID.
+- The WiFi section shows the frequency band (2.4 / 5 / 6 GHz) alongside the channel.
+
+#### Changed
+- Related WiFi values now share a row to keep the section compact: signal with RSSI, and
+  channel with band and radio type.
+
 ### 1.3.3 - 2026-09-28
 
 #### Added

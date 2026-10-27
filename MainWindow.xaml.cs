@@ -486,11 +486,19 @@ namespace Anemo.Widget
             if (!wifi.Connected) return;
 
             txtSSID.Text = wifi.Ssid;
-            txtSignal.Text = wifi.SignalPercent;
-            txtRSSI.Text = wifi.RssiText;
-            txtChannel.Text = wifi.Channel;
-            txtRadio.Text = wifi.RadioType;
+            txtAP.Text = wifi.AccessPoint;
+            txtBSSID.Text = wifi.Bssid;
+            txtSignal.Text = JoinWifiParts(wifi.SignalPercent, wifi.RssiText);
+            txtChannel.Text = JoinWifiParts(wifi.Channel, wifi.Band, wifi.RadioType);
             txtSecurity.Text = wifi.Authentication;
+        }
+
+        // Related Wi-Fi values share a row (e.g. "36 · 5 GHz · 802.11ax"); any part that
+        // couldn't be read is left out rather than shown as a stray dash.
+        private static string JoinWifiParts(params string[] parts)
+        {
+            var known = parts.Where(p => !string.IsNullOrWhiteSpace(p) && p != "-").ToArray();
+            return known.Length == 0 ? "-" : string.Join(" · ", known);
         }
 
         // -------------------------------------------------------------
