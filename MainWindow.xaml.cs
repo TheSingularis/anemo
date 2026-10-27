@@ -486,9 +486,12 @@ namespace Anemo.Widget
             if (!wifi.Connected) return;
 
             txtSSID.Text = wifi.Ssid;
+            txtAP.Text = wifi.AccessPoint;
+            txtBSSID.Text = wifi.Bssid;
             txtSignal.Text = wifi.SignalPercent;
             txtRSSI.Text = wifi.RssiText;
             txtChannel.Text = wifi.Channel;
+            txtBand.Text = wifi.Band;
             txtRadio.Text = wifi.RadioType;
             txtSecurity.Text = wifi.Authentication;
         }

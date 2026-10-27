@@ -228,25 +228,37 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
                 <TextBlock Grid.Row="0" Grid.Column="0" Text="SSID" Style="{StaticResource RowLabelStyle}"/>
                 <TextBlock x:Name="txtSSID" Grid.Row="0" Grid.Column="1" Text="-" Style="{StaticResource RowValueStyle}"/>
 
-                <TextBlock Grid.Row="1" Grid.Column="0" Text="Signal" Style="{StaticResource RowLabelStyle}"/>
-                <TextBlock x:Name="txtSignal" Grid.Row="1" Grid.Column="1" Text="-" Style="{StaticResource RowValueStyle}"/>
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="AP" Style="{StaticResource RowLabelStyle}"/>
+                <TextBlock x:Name="txtAP" Grid.Row="1" Grid.Column="1" Text="-" Style="{StaticResource RowValueStyle}"/>
 
-                <TextBlock Grid.Row="2" Grid.Column="0" Text="RSSI" Style="{StaticResource RowLabelStyle}"/>
-                <TextBlock x:Name="txtRSSI" Grid.Row="2" Grid.Column="1" Text="-" Style="{StaticResource RowValueStyle}"/>
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="BSSID" Style="{StaticResource RowLabelStyle}"/>
+                <TextBlock x:Name="txtBSSID" Grid.Row="2" Grid.Column="1" Text="-" Style="{StaticResource RowValueStyle}"/>
 
-                <TextBlock Grid.Row="3" Grid.Column="0" Text="Channel" Style="{StaticResource RowLabelStyle}"/>
-                <TextBlock x:Name="txtChannel" Grid.Row="3" Grid.Column="1" Text="-" Style="{StaticResource RowValueStyle}"/>
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="Signal" Style="{StaticResource RowLabelStyle}"/>
+                <TextBlock x:Name="txtSignal" Grid.Row="3" Grid.Column="1" Text="-" Style="{StaticResource RowValueStyle}"/>
 
-                <TextBlock Grid.Row="4" Grid.Column="0" Text="Radio" Style="{StaticResource RowLabelStyle}"/>
-                <TextBlock x:Name="txtRadio" Grid.Row="4" Grid.Column="1" Text="-" Style="{StaticResource RowValueStyle}"/>
+                <TextBlock Grid.Row="4" Grid.Column="0" Text="RSSI" Style="{StaticResource RowLabelStyle}"/>
+                <TextBlock x:Name="txtRSSI" Grid.Row="4" Grid.Column="1" Text="-" Style="{StaticResource RowValueStyle}"/>
 
-                <TextBlock Grid.Row="5" Grid.Column="0" Text="Security" Style="{StaticResource RowLabelStyle}"/>
-                <TextBlock x:Name="txtSecurity" Grid.Row="5" Grid.Column="1" Text="-" Style="{StaticResource RowValueStyle}"/>
+                <TextBlock Grid.Row="5" Grid.Column="0" Text="Channel" Style="{StaticResource RowLabelStyle}"/>
+                <TextBlock x:Name="txtChannel" Grid.Row="5" Grid.Column="1" Text="-" Style="{StaticResource RowValueStyle}"/>
+
+                <TextBlock Grid.Row="6" Grid.Column="0" Text="Band" Style="{StaticResource RowLabelStyle}"/>
+                <TextBlock x:Name="txtBand" Grid.Row="6" Grid.Column="1" Text="-" Style="{StaticResource RowValueStyle}"/>
+
+                <TextBlock Grid.Row="7" Grid.Column="0" Text="Radio" Style="{StaticResource RowLabelStyle}"/>
+                <TextBlock x:Name="txtRadio" Grid.Row="7" Grid.Column="1" Text="-" Style="{StaticResource RowValueStyle}"/>
+
+                <TextBlock Grid.Row="8" Grid.Column="0" Text="Security" Style="{StaticResource RowLabelStyle}"/>
+                <TextBlock x:Name="txtSecurity" Grid.Row="8" Grid.Column="1" Text="-" Style="{StaticResource RowValueStyle}"/>
             </Grid>
         </StackPanel>
 
