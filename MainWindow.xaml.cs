@@ -507,10 +507,6 @@ namespace Anemo.Widget
         // UAC, not every click)
         // -------------------------------------------------------------
 
-        private const string RenewTaskName = "Anemo_ReleaseRenew";
-        private static readonly string RenewLogPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "netwidget_renew.log");
-        private static readonly string RenewScriptPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "netwidget_renew_task.bat");
-
         private async void btnRenew_Click(object sender, RoutedEventArgs e)
         {
             var adapterName = (cmbAdapter.SelectedItem as AdapterOption)?.Name;
@@ -531,17 +527,14 @@ namespace Anemo.Widget
                 // below) is blocking I/O - it must run off the UI thread or the whole
                 // window stops pumping messages and appears to freeze/blank out.
                 //
-                // The script's content (which adapter it targets) is rewritten on every
-                // click - only the scheduled task itself is a one-time, admin-gated setup.
-                bool ran = await System.Threading.Tasks.Task.Run(() =>
-                {
-                    ElevatedTaskRunner.WriteScript(RenewScriptPath, BuildRenewScript(adapterName));
-                    return ElevatedTaskRunner.EnsureRegisteredAndRun(RenewTaskName, RenewScriptPath);
-                });
-                if (!ran)
+                // Only the adapter name is sent per click; what actually runs elevated is a
+                // fixed, admin-protected script (see ElevatedTaskRunner).
+                var result = await System.Threading.Tasks.Task.Run(() =>
+                    ElevatedTaskRunner.Run(ElevatedRequest.Renew(adapterName)));
+                if (!result.Success)
                 {
                     txtStatus.Foreground = System.Windows.Media.Brushes.Red;
-                    txtStatus.Text = "Setup cancelled";
+                    txtStatus.Text = result.Cancelled ? result.Message : $"Failed: {result.Message}";
                     btnRenew.IsEnabled = true;
                     return;
                 }
@@ -558,14 +551,6 @@ namespace Anemo.Widget
             btnRenew.IsEnabled = true;
             RefreshNetworkInfo();
         }
-
-        // Redirection/&&/quoting doesn't survive being embedded inline in schtasks' /tr
-        // value, so the release/renew logic lives in a script file instead and /tr just
-        // points at that single, stable path - only the file's content changes per click.
-        private static string BuildRenewScript(string adapterName) =>
-            "@echo off\r\n" +
-            $"ipconfig /release \"{adapterName}\" > \"{RenewLogPath}\" 2>&1\r\n" +
-            $"ipconfig /renew \"{adapterName}\" >> \"{RenewLogPath}\" 2>&1\r\n";
 
         // -------------------------------------------------------------
         // Set Static IP
