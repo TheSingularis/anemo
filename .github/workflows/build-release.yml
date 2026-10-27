@@ -25,6 +25,11 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
+      # Gate for everything below (dev sanity builds and tagged releases alike): the
+      # Anemo.Core unit tests have to pass before anything gets published.
+      - name: Run tests
+        run: dotnet test Anemo.Core.Tests/Anemo.Core.Tests.csproj -c Release
+
       # Every dev push sanity-builds both apps as plain exes (no packaging) - cheap
       # confirmation that nothing is broken, without waiting for a real release.
       - name: Publish widget (sanity build)

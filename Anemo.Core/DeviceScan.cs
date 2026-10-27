@@ -76,7 +76,7 @@ namespace Anemo.Core
             }
         }
 
-        private static IEnumerable<string> EnumerateHosts(string localIp, int prefixLength)
+        internal static IEnumerable<string> EnumerateHosts(string localIp, int prefixLength)
         {
             if (!IPAddress.TryParse(localIp, out var addr)) yield break;
 
@@ -94,10 +94,11 @@ namespace Anemo.Core
 
         private static int ParseLastOctet(string ip) => int.TryParse(ip.Split('.')[^1], out var v) ? v : 0;
 
-        private static Dictionary<string, string> ReadArpTable()
+        private static Dictionary<string, string> ReadArpTable() => ParseArpTable(RunCommand("arp", "-a"));
+
+        internal static Dictionary<string, string> ParseArpTable(string output)
         {
             var result = new Dictionary<string, string>();
-            var output = RunCommand("arp", "-a");
 
             foreach (var line in output.Split('\n'))
             {
