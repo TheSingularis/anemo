@@ -1,0 +1,24 @@
+name: Tests
+
+# build-release.yml only runs on dev pushes and tags, so this gives pull requests
+# their own test run before they land. Core targets net8.0-windows (WPF), hence
+# windows-latest.
+on:
+  pull_request:
+    branches: [ dev, main ]
+
+jobs:
+  test:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Run tests
+        run: dotnet test Anemo.Core.Tests/Anemo.Core.Tests.csproj -c Release
