@@ -78,7 +78,7 @@ namespace Anemo.Widget
             // progress window); this timer just covers re-checks for a widget that
             // stays running for a long time between restarts.
             _updateTimer.Interval = TimeSpan.FromHours(6);
-            _updateTimer.Tick += (_, _) => CheckForUpdatesSilently();
+            _updateTimer.Tick += (_, _) => _ = CheckForUpdatesInBackgroundAsync();
             _updateTimer.Start();
 
             // Querying WiFi details (SSID/signal/RSSI) touches the same Windows APIs
@@ -166,18 +166,42 @@ namespace Anemo.Widget
             };
         }
 
-        // Used by the periodic background timer - no window, just a tray balloon if
-        // an update is actually found (routine "nothing to do" checks stay invisible).
-        private void CheckForUpdatesSilently()
+        // Used by the periodic background timer. Routine "nothing to do" checks stay
+        // invisible, but once an update is actually found the same splash as the startup and
+        // manual paths is shown: a widget that's already running would otherwise download,
+        // vanish and reappear with nothing on screen in between (a tray balloon alone is
+        // easy to miss or is suppressed by Focus Assist).
+        private async Task CheckForUpdatesInBackgroundAsync()
         {
-            _ = AppUpdater.CheckAndApplyAsync(onUpdateApplying: async version =>
+            if (_checkingForUpdates) return;
+            _checkingForUpdates = true;
+
+            UpdateProgressWindow? splash = null;
+            try
             {
-                _trayIcon?.ShowBalloonTip(4000, "Anemo Widget",
-                    $"Updating to v{version}, relaunching...", WinForms.ToolTipIcon.Info);
-                // Give the balloon a moment to actually render before the process
-                // restarts out from under it.
-                await Task.Delay(2500);
-            });
+                var (mgr, info) = await AppUpdater.CheckAsync();
+                if (info == null) return;
+
+                var window = new UpdateProgressWindow("Anemo Widget");
+                splash = window;
+                window.Show();
+
+                await AppUpdater.DownloadAndApplyAsync(mgr, info,
+                    status => window.SetStatus(status),
+                    percent => window.SetProgress(percent),
+                    async version =>
+                    {
+                        window.SetStatus($"Updating to v{version}...");
+                        await Task.Delay(800);
+                    });
+                // Only reached if the update attempt failed (best-effort) - a successful
+                // apply shuts the process down from inside DownloadAndApplyAsync.
+            }
+            finally
+            {
+                splash?.Close();
+                _checkingForUpdates = false;
+            }
         }
 
         // Used for the manual "Check for Updates" tray click - same pre-open-style
