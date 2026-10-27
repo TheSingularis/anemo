@@ -13,6 +13,7 @@ namespace Anemo.Core
         string SignalPercent,
         string RssiText,
         string Channel,
+        string Band,
         string RadioType,
         string Authentication);
 
@@ -38,15 +39,18 @@ namespace Anemo.Core
 
             if (!connected)
             {
-                return new CurrentWifiInfo(false, "-", "-", "-", "-", "-", "-");
+                return new CurrentWifiInfo(false, "-", "-", "-", "-", "-", "-", "-");
             }
+
+            var (band, channel) = GetBandAndChannel();
 
             return new CurrentWifiInfo(
                 Connected: true,
                 Ssid: props.GetValueOrDefault("SSID", "-"),
                 SignalPercent: props.GetValueOrDefault("Signal", "-"),
                 RssiText: GetRssiText(),
-                Channel: props.GetValueOrDefault("Channel", "-"),
+                Channel: props.GetValueOrDefault("Channel") ?? channel ?? "-",
+                Band: band ?? "-",
                 RadioType: props.GetValueOrDefault("Radio type", "-"),
                 Authentication: props.GetValueOrDefault("Authentication", "-"));
         }
@@ -64,6 +68,40 @@ namespace Anemo.Core
             catch
             {
                 return "-";
+            }
+        }
+
+        // Band isn't reliably in netsh output (only newer Windows 11 builds print it, and the
+        // label is localized), and it can't be inferred from the channel number alone since
+        // 6 GHz channels reuse 1, 5, 9, ... So it's read from the BSS entry for the access
+        // point we're associated with (matched by BSSID), whose center frequency gives both
+        // band and channel. The channel only fills in when netsh didn't report one (e.g. a
+        // non-English Windows). Either value comes back null when it can't be determined.
+        private static (string? Band, string? Channel) GetBandAndChannel()
+        {
+            try
+            {
+                var iface = NativeWifi.EnumerateInterfaces().FirstOrDefault(i => i.State == InterfaceState.Connected);
+                if (iface == null) return (null, null);
+
+                var (connResult, conn) = NativeWifi.GetCurrentConnection(iface.Id);
+                if (connResult != ActionResult.Success || conn == null) return (null, null);
+
+                var bssid = conn.Bssid.ToString();
+                var (bssResult, bssList) = NativeWifi.EnumerateBssNetworks(iface.Id);
+                if (bssResult != ActionResult.Success) return (null, null);
+
+                var bss = bssList.FirstOrDefault(b => string.Equals(b.Bssid.ToString(), bssid, StringComparison.OrdinalIgnoreCase));
+                if (bss == null || bss.Band <= 0) return (null, null);
+
+                // Band is reported as 2.4 / 3.6 / 5.0 / 6.0 (GHz); drop the trailing ".0".
+                var band = $"{bss.Band.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)} GHz";
+                var channel = bss.Channel > 0 ? bss.Channel.ToString() : null;
+                return (band, channel);
+            }
+            catch
+            {
+                return (null, null);
             }
         }
 

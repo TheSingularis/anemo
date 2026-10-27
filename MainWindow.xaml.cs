@@ -489,6 +489,7 @@ namespace Anemo.Widget
             txtSignal.Text = wifi.SignalPercent;
             txtRSSI.Text = wifi.RssiText;
             txtChannel.Text = wifi.Channel;
+            txtBand.Text = wifi.Band;
             txtRadio.Text = wifi.RadioType;
             txtSecurity.Text = wifi.Authentication;
         }
