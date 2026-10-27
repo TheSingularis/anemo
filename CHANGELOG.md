@@ -8,6 +8,16 @@ Dates are release dates, in UTC.
 
 > Shipped as **NetworkWidget** prior to 1.3.0 - see [Renamed](#renamed) below.
 
+### Unreleased
+
+#### Fixed
+- Release & Renew and Set Static IP no longer run a script out of the user-writable
+  `%TEMP%` folder as administrator. The elevated task now runs a fixed script installed
+  under Program Files, and each request (adapter name, IP settings) is validated before
+  anything runs. The first use after updating shows one new UAC prompt to install it.
+- The widget now reports a real failure when the elevated command fails, instead of always
+  showing success.
+
 ### 1.3.3 - 2026-09-28
 
 #### Added
