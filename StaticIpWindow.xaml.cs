@@ -7,10 +7,6 @@ namespace Anemo.Widget
 {
     public partial class StaticIpWindow : Window
     {
-        private const string TaskName = "Anemo_SetStaticIp";
-        private static readonly string LogPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "netwidget_staticip.log");
-        private static readonly string ScriptPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "netwidget_staticip_task.bat");
-
         private readonly string _adapterName;
 
         public StaticIpWindow(string adapterName, string? currentCidr, string? currentGateway)
@@ -58,13 +54,10 @@ namespace Anemo.Widget
 
             try
             {
-                bool ran = await System.Threading.Tasks.Task.Run(() =>
-                {
-                    ElevatedTaskRunner.WriteScript(ScriptPath, BuildApplyScript(address.ToString(), mask, gateway?.ToString()));
-                    return ElevatedTaskRunner.EnsureRegisteredAndRun(TaskName, ScriptPath);
-                });
+                var result = await System.Threading.Tasks.Task.Run(() =>
+                    ElevatedTaskRunner.Run(ElevatedRequest.StaticIp(_adapterName, address.ToString(), mask, gateway?.ToString())));
 
-                SetStatus(ran ? "Static IP applied" : "Setup cancelled", error: !ran);
+                ReportResult(result, "Static IP applied");
             }
             catch (Exception ex)
             {
@@ -81,13 +74,10 @@ namespace Anemo.Widget
 
             try
             {
-                bool ran = await System.Threading.Tasks.Task.Run(() =>
-                {
-                    ElevatedTaskRunner.WriteScript(ScriptPath, BuildDhcpScript());
-                    return ElevatedTaskRunner.EnsureRegisteredAndRun(TaskName, ScriptPath);
-                });
+                var result = await System.Threading.Tasks.Task.Run(() =>
+                    ElevatedTaskRunner.Run(ElevatedRequest.Dhcp(_adapterName)));
 
-                SetStatus(ran ? "Restored to automatic (DHCP)" : "Setup cancelled", error: !ran);
+                ReportResult(result, "Restored to automatic (DHCP)");
             }
             catch (Exception ex)
             {
@@ -97,24 +87,11 @@ namespace Anemo.Widget
             SetButtonsEnabled(true);
         }
 
-        // Redirection/quoting doesn't survive being embedded inline in schtasks' /tr
-        // value, so - same as Release & Renew - the actual commands live in a script
-        // file and /tr just points at that single, stable path; only the file's
-        // content changes per click.
-        private string BuildApplyScript(string ip, string mask, string? gateway)
+        private void ReportResult(ElevatedResult result, string successText)
         {
-            var setAddress = gateway == null
-                ? $"netsh interface ip set address name=\"{_adapterName}\" static {ip} {mask}"
-                : $"netsh interface ip set address name=\"{_adapterName}\" static {ip} {mask} {gateway} 1";
-
-            return "@echo off\r\n" +
-                   $"{setAddress} > \"{LogPath}\" 2>&1\r\n";
+            if (result.Success) SetStatus(successText, error: false);
+            else SetStatus(result.Cancelled ? result.Message : $"Failed: {result.Message}", error: true);
         }
-
-        private string BuildDhcpScript() =>
-            "@echo off\r\n" +
-            $"netsh interface ip set address name=\"{_adapterName}\" dhcp > \"{LogPath}\" 2>&1\r\n" +
-            $"netsh interface ip set dns name=\"{_adapterName}\" dhcp >> \"{LogPath}\" 2>&1\r\n";
 
         private void SetStatus(string text, bool error, bool busy = false)
         {

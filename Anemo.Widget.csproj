@@ -22,6 +22,13 @@
     <PackageReference Include="Velopack" Version="1.2.0" />
   </ItemGroup>
 
+  <!-- Run elevated by ElevatedTaskRunner; embedded so the installed copy can be verified
+       byte-for-byte against what this build ships. -->
+  <ItemGroup>
+    <EmbeddedResource Include="Scripts\AnemoNetTask.ps1" LogicalName="Anemo.Widget.Scripts.AnemoNetTask.ps1" />
+    <EmbeddedResource Include="Scripts\InstallNetTask.ps1" LogicalName="Anemo.Widget.Scripts.InstallNetTask.ps1" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="Anemo.Core\Anemo.Core.csproj" />
   </ItemGroup>
