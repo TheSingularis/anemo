@@ -8,6 +8,22 @@ Dates are release dates, in UTC.
 
 > Shipped as **NetworkWidget** prior to 1.3.0 - see [Renamed](#renamed) below.
 
+### 1.3.5 - 2026-10-28
+
+#### Changed
+- When the widget is already running and its periodic update check finds an update, it now
+  shows the update progress window (download progress, then "Updating to vX...") before
+  restarting, instead of only a brief tray notification. Routine "up to date" checks still
+  show nothing.
+
+#### Fixed
+- Release & Renew and Set Static IP no longer run a script out of the user-writable
+  `%TEMP%` folder as administrator. The elevated task now runs a fixed script installed
+  under Program Files, and each request (adapter name, IP settings) is validated before
+  anything runs. The first use after updating shows one new UAC prompt to install it.
+- The widget now reports a real failure when the elevated command fails, instead of always
+  showing success.
+
 ### 1.3.4 - 2026-10-27
 
 #### Added

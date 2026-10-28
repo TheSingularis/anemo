@@ -78,7 +78,7 @@ namespace Anemo.Widget
             // progress window); this timer just covers re-checks for a widget that
             // stays running for a long time between restarts.
             _updateTimer.Interval = TimeSpan.FromHours(6);
-            _updateTimer.Tick += (_, _) => CheckForUpdatesSilently();
+            _updateTimer.Tick += (_, _) => _ = CheckForUpdatesInBackgroundAsync();
             _updateTimer.Start();
 
             // Querying WiFi details (SSID/signal/RSSI) touches the same Windows APIs
@@ -166,18 +166,42 @@ namespace Anemo.Widget
             };
         }
 
-        // Used by the periodic background timer - no window, just a tray balloon if
-        // an update is actually found (routine "nothing to do" checks stay invisible).
-        private void CheckForUpdatesSilently()
+        // Used by the periodic background timer. Routine "nothing to do" checks stay
+        // invisible, but once an update is actually found the same splash as the startup and
+        // manual paths is shown: a widget that's already running would otherwise download,
+        // vanish and reappear with nothing on screen in between (a tray balloon alone is
+        // easy to miss or is suppressed by Focus Assist).
+        private async Task CheckForUpdatesInBackgroundAsync()
         {
-            _ = AppUpdater.CheckAndApplyAsync(onUpdateApplying: async version =>
+            if (_checkingForUpdates) return;
+            _checkingForUpdates = true;
+
+            UpdateProgressWindow? splash = null;
+            try
             {
-                _trayIcon?.ShowBalloonTip(4000, "Anemo Widget",
-                    $"Updating to v{version}, relaunching...", WinForms.ToolTipIcon.Info);
-                // Give the balloon a moment to actually render before the process
-                // restarts out from under it.
-                await Task.Delay(2500);
-            });
+                var (mgr, info) = await AppUpdater.CheckAsync();
+                if (info == null) return;
+
+                var window = new UpdateProgressWindow("Anemo Widget");
+                splash = window;
+                window.Show();
+
+                await AppUpdater.DownloadAndApplyAsync(mgr, info,
+                    status => window.SetStatus(status),
+                    percent => window.SetProgress(percent),
+                    async version =>
+                    {
+                        window.SetStatus($"Updating to v{version}...");
+                        await Task.Delay(800);
+                    });
+                // Only reached if the update attempt failed (best-effort) - a successful
+                // apply shuts the process down from inside DownloadAndApplyAsync.
+            }
+            finally
+            {
+                splash?.Close();
+                _checkingForUpdates = false;
+            }
         }
 
         // Used for the manual "Check for Updates" tray click - same pre-open-style
@@ -507,10 +531,6 @@ namespace Anemo.Widget
         // UAC, not every click)
         // -------------------------------------------------------------
 
-        private const string RenewTaskName = "Anemo_ReleaseRenew";
-        private static readonly string RenewLogPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "netwidget_renew.log");
-        private static readonly string RenewScriptPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "netwidget_renew_task.bat");
-
         private async void btnRenew_Click(object sender, RoutedEventArgs e)
         {
             var adapterName = (cmbAdapter.SelectedItem as AdapterOption)?.Name;
@@ -531,17 +551,14 @@ namespace Anemo.Widget
                 // below) is blocking I/O - it must run off the UI thread or the whole
                 // window stops pumping messages and appears to freeze/blank out.
                 //
-                // The script's content (which adapter it targets) is rewritten on every
-                // click - only the scheduled task itself is a one-time, admin-gated setup.
-                bool ran = await System.Threading.Tasks.Task.Run(() =>
-                {
-                    ElevatedTaskRunner.WriteScript(RenewScriptPath, BuildRenewScript(adapterName));
-                    return ElevatedTaskRunner.EnsureRegisteredAndRun(RenewTaskName, RenewScriptPath);
-                });
-                if (!ran)
+                // Only the adapter name is sent per click; what actually runs elevated is a
+                // fixed, admin-protected script (see ElevatedTaskRunner).
+                var result = await System.Threading.Tasks.Task.Run(() =>
+                    ElevatedTaskRunner.Run(ElevatedRequest.Renew(adapterName)));
+                if (!result.Success)
                 {
                     txtStatus.Foreground = System.Windows.Media.Brushes.Red;
-                    txtStatus.Text = "Setup cancelled";
+                    txtStatus.Text = result.Cancelled ? result.Message : $"Failed: {result.Message}";
                     btnRenew.IsEnabled = true;
                     return;
                 }
@@ -558,14 +575,6 @@ namespace Anemo.Widget
             btnRenew.IsEnabled = true;
             RefreshNetworkInfo();
         }
-
-        // Redirection/&&/quoting doesn't survive being embedded inline in schtasks' /tr
-        // value, so the release/renew logic lives in a script file instead and /tr just
-        // points at that single, stable path - only the file's content changes per click.
-        private static string BuildRenewScript(string adapterName) =>
-            "@echo off\r\n" +
-            $"ipconfig /release \"{adapterName}\" > \"{RenewLogPath}\" 2>&1\r\n" +
-            $"ipconfig /renew \"{adapterName}\" >> \"{RenewLogPath}\" 2>&1\r\n";
 
         // -------------------------------------------------------------
         // Set Static IP
