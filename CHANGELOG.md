@@ -8,7 +8,13 @@ Dates are release dates, in UTC.
 
 > Shipped as **NetworkWidget** prior to 1.3.0 - see [Renamed](#renamed) below.
 
-### Unreleased
+### 1.3.5 - 2026-10-28
+
+#### Changed
+- When the widget is already running and its periodic update check finds an update, it now
+  shows the update progress window (download progress, then "Updating to vX...") before
+  restarting, instead of only a brief tray notification. Routine "up to date" checks still
+  show nothing.
 
 #### Fixed
 - Release & Renew and Set Static IP no longer run a script out of the user-writable
