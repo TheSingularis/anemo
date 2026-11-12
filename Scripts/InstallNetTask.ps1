@@ -1,9 +1,10 @@
 # Elevated one-time setup for the widget's network-action task. The widget prepends
-# $PayloadB64 / $ScriptPath / $TargetPath / $TaskName / $RequestFile before running this body.
+# $PayloadB64 / $ScriptPath / $TargetPath / $TaskName / $TaskUser / $RequestFile before running this body.
 #
 # Installs AnemoNetTask.ps1 into an admin-only location and registers an on-demand
-# (trigger-less) HIGHEST-privilege task that runs exactly that script. It also removes the
-# older per-action tasks, which ran a user-writable .bat out of %TEMP%.
+# (trigger-less) HIGHEST-privilege task that runs exactly that script, as the widget's user
+# ($TaskUser, captured before elevation - the elevated identity can be a different admin
+# account when UAC asks for credentials). It also removes the older per-action tasks, which ran a user-writable .bat out of %TEMP%.
 $ErrorActionPreference = 'Stop'
 
 $dir = Split-Path -Parent $ScriptPath
@@ -18,7 +19,7 @@ $psExe = Join-Path ([Environment]::GetFolderPath('System')) 'WindowsPowerShell\v
 $taskArgs = '-NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File "' + $ScriptPath + '" -RequestFile "' + $RequestFile + '"'
 
 $action = New-ScheduledTaskAction -Execute $psExe -Argument $taskArgs
-$principal = New-ScheduledTaskPrincipal -UserId ([Security.Principal.WindowsIdentity]::GetCurrent().Name) -LogonType Interactive -RunLevel Highest
+$principal = New-ScheduledTaskPrincipal -UserId $TaskUser -LogonType Interactive -RunLevel Highest
 # Unlike schtasks' defaults, don't refuse to start / kill the task on battery power (laptops).
 $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit (New-TimeSpan -Minutes 2)
 
