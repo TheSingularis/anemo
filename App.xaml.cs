@@ -17,6 +17,15 @@ namespace Anemo.Widget
 
         protected override async void OnStartup(StartupEventArgs e)
         {
+            // One-time elevated setup for Release & Renew / Set Static IP: the widget re-launches
+            // itself elevated with this flag (see NetTaskInstaller). Do the job and exit before
+            // any UI, update check or settings load.
+            if (Array.IndexOf(e.Args, NetTaskInstaller.Flag) >= 0)
+            {
+                Environment.Exit(NetTaskInstaller.Run(e.Args));
+                return;
+            }
+
             base.OnStartup(e);
 
             // This is a relaunch right after an update was just applied (see

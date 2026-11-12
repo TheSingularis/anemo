@@ -8,6 +8,16 @@ Dates are release dates, in UTC.
 
 > Shipped as **NetworkWidget** prior to 1.3.0 - see [Renamed](#renamed) below.
 
+### 1.3.8 - 2026-11-12
+
+#### Changed
+- The one-time elevated setup for Release & Renew and Set Static IP no longer writes a
+  PowerShell installer to your profile and runs it as administrator. The widget now
+  re-launches itself elevated (one UAC prompt) to copy the task script into Program Files and
+  register the scheduled task directly. Antivirus was locking and blocking the old staged
+  installer, which made setup fail with "being used by another process" / "access denied".
+  The scheduled task and the script it runs are unchanged.
+
 ### 1.3.7 - 2026-11-12
 
 #### Fixed
