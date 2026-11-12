@@ -193,6 +193,13 @@ namespace Anemo.Widget
             catch { return ""; }
         }
 
+        // Raw setup-error text (if any), for prefilling a bug report.
+        public static string? ReadSetupErrorForReport()
+        {
+            try { return File.Exists(ErrorLogPath) ? File.ReadAllText(ErrorLogPath) : null; }
+            catch { return null; }
+        }
+
         private static ElevatedResult RunTask()
         {
             var before = QueryTask();
