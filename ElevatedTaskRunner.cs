@@ -47,6 +47,7 @@ namespace Anemo.Widget
         private static readonly string InstallDir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Anemo", "NetTask");
         private static readonly string ScriptPath = Path.Combine(InstallDir, "AnemoNetTask.ps1");
+        private static readonly string ErrorLogPath = Path.Combine(InstallDir, "setup-error.txt");
         private static readonly string TargetPath = Path.Combine(InstallDir, "request-path.txt");
 
         private static readonly string DataDir = Path.Combine(
@@ -117,6 +118,7 @@ namespace Anemo.Widget
                 .AppendLine($"$ScriptPath = {PsQuote(ScriptPath)}")
                 .AppendLine($"$TargetPath = {PsQuote(TargetPath)}")
                 .AppendLine($"$TaskName = {PsQuote(TaskName)}")
+                .AppendLine($"$TaskUser = {PsQuote(System.Security.Principal.WindowsIdentity.GetCurrent().Name)}")
                 .AppendLine($"$RequestFile = {PsQuote(RequestPath)}")
                 .AppendLine(Encoding.UTF8.GetString(ReadResource(InstallerResource)))
                 .ToString();
@@ -128,11 +130,23 @@ namespace Anemo.Widget
 
             try
             {
+                // Everything runs under -ErrorActionPreference Stop: a failed read must not
+                // fall through to a null hash that looks like a tampered file. Each failure
+                // mode gets its own exit code (9 hash mismatch, 10 couldn't read/hash the
+                // staged file, 11 the installer itself threw), and the error text goes to an
+                // admin-only file so the widget can show the real cause.
+                var errFile = PsQuote(ErrorLogPath);
                 var bootstrap =
+                    "$ErrorActionPreference='Stop';" +
+                    $"$e={errFile};" +
+                    "function Fail($c,$m){try{New-Item -ItemType Directory -Force -Path (Split-Path -Parent $e)|Out-Null;[IO.File]::WriteAllText($e,[string]$m)}catch{};exit $c};" +
+                    "try{Remove-Item -LiteralPath $e -Force -ErrorAction SilentlyContinue}catch{};" +
+                    "try{" +
                     $"$b=[IO.File]::ReadAllBytes({PsQuote(stagedPath)});" +
-                    "$h=[BitConverter]::ToString([Security.Cryptography.SHA256]::Create().ComputeHash($b)).Replace('-','');" +
-                    $"if($h -ne '{hash}'){{exit 9}};" +
-                    "Invoke-Expression([Text.Encoding]::UTF8.GetString($b))";
+                    "$h=[BitConverter]::ToString([Security.Cryptography.SHA256]::Create().ComputeHash($b)).Replace('-','')" +
+                    "}catch{Fail 10 ($_|Out-String)};" +
+                    $"if($h -ne '{hash}'){{Fail 9 'The staged installer did not match its expected SHA-256.'}};" +
+                    "try{Invoke-Expression([Text.Encoding]::UTF8.GetString($b))}catch{Fail 11 ($_|Out-String)}";
 
                 var psi = new ProcessStartInfo
                 {
@@ -145,7 +159,8 @@ namespace Anemo.Widget
 
                 using var proc = Process.Start(psi);
                 proc!.WaitForExit();
-                return proc.ExitCode == 0 ? null : ElevatedResult.Fail($"Setup failed (exit code {proc.ExitCode})");
+                if (proc.ExitCode == 0) return null;
+                return ElevatedResult.Fail($"Setup failed (exit code {proc.ExitCode}){ReadSetupError()}");
             }
             catch (Win32Exception ex) when (ex.NativeErrorCode == 1223)
             {
@@ -156,6 +171,19 @@ namespace Anemo.Widget
             {
                 try { File.Delete(stagedPath); } catch { /* best effort */ }
             }
+        }
+
+        // The elevated bootstrap writes its error text here (admin-only dir, so it can't be forged).
+        private static string ReadSetupError()
+        {
+            try
+            {
+                if (!File.Exists(ErrorLogPath)) return "";
+                var text = File.ReadAllText(ErrorLogPath).Trim();
+                if (text.Length > 300) text = text[..300] + "...";
+                return text.Length == 0 ? "" : ": " + text.ReplaceLineEndings(" ");
+            }
+            catch { return ""; }
         }
 
         private static ElevatedResult RunTask()

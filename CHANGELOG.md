@@ -8,6 +8,16 @@ Dates are release dates, in UTC.
 
 > Shipped as **NetworkWidget** prior to 1.3.0 - see [Renamed](#renamed) below.
 
+### 1.3.6 - 2026-11-12
+
+#### Fixed
+- When the one-time elevated setup for Release & Renew and Set Static IP fails, the widget
+  now says why (for example "Setup failed (exit code 10): ...") instead of a bare exit code.
+  A failure to read the staged installer was previously reported as exit code 9, which also
+  means a hash mismatch, so the real cause was hidden.
+- The elevated task is now registered for the signed-in user even when UAC is approved with
+  a different administrator account's credentials.
+
 ### 1.3.5 - 2026-10-28
 
 #### Changed
