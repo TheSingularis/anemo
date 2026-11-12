@@ -133,7 +133,7 @@ namespace Anemo.Widget
                 // Everything runs under -ErrorActionPreference Stop: a failed read must not
                 // fall through to a null hash that looks like a tampered file. Each failure
                 // mode gets its own exit code (9 hash mismatch, 10 couldn't read/hash the
-                // staged file, 11 the installer itself threw), and the error text goes to an
+                // staged file (after retries), 11 the installer itself threw), and the error text goes to an
                 // admin-only file so the widget can show the real cause.
                 var errFile = PsQuote(ErrorLogPath);
                 var bootstrap =
@@ -142,7 +142,14 @@ namespace Anemo.Widget
                     "function Fail($c,$m){try{New-Item -ItemType Directory -Force -Path (Split-Path -Parent $e)|Out-Null;[IO.File]::WriteAllText($e,[string]$m)}catch{};exit $c};" +
                     "try{Remove-Item -LiteralPath $e -Force -ErrorAction SilentlyContinue}catch{};" +
                     "try{" +
-                    $"$b=[IO.File]::ReadAllBytes({PsQuote(stagedPath)});" +
+                    // Open with full sharing and retry: antivirus often holds a freshly written
+                    // file for a moment, which makes a plain ReadAllBytes fail with "in use".
+                    "$b=$null;" +
+                    $"$p={PsQuote(stagedPath)};" +
+                    "for($i=0;$i -lt 20 -and $null -eq $b;$i++){try{" +
+                    "$fs=New-Object IO.FileStream($p,[IO.FileMode]::Open,[IO.FileAccess]::Read,[IO.FileShare]'ReadWrite,Delete');" +
+                    "try{$ms=New-Object IO.MemoryStream;$fs.CopyTo($ms);$b=$ms.ToArray()}finally{$fs.Dispose()}" +
+                    "}catch{if($i -ge 19){throw};Start-Sleep -Milliseconds 250}};" +
                     "$h=[BitConverter]::ToString([Security.Cryptography.SHA256]::Create().ComputeHash($b)).Replace('-','')" +
                     "}catch{Fail 10 ($_|Out-String)};" +
                     $"if($h -ne '{hash}'){{Fail 9 'The staged installer did not match its expected SHA-256.'}};" +
