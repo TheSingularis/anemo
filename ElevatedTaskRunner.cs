@@ -3,7 +3,6 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
-using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -37,18 +36,17 @@ namespace Anemo.Widget
     // user can write is ever executed.
     internal static class ElevatedTaskRunner
     {
-        private const string TaskName = "Anemo_ElevatedNetworkAction";
-        private const string ScriptResource = "Anemo.Widget.Scripts.AnemoNetTask.ps1";
-        private const string InstallerResource = "Anemo.Widget.Scripts.InstallNetTask.ps1";
+        internal const string TaskName = "Anemo_ElevatedNetworkAction";
+        internal const string ScriptResource = "Anemo.Widget.Scripts.AnemoNetTask.ps1";
 
         // SCHED_S_TASK_RUNNING - what schtasks reports as "Last Result" while a run is in flight.
         private const int TaskRunningResult = 267009;
 
-        private static readonly string InstallDir = Path.Combine(
+        internal static readonly string InstallDir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Anemo", "NetTask");
-        private static readonly string ScriptPath = Path.Combine(InstallDir, "AnemoNetTask.ps1");
-        private static readonly string ErrorLogPath = Path.Combine(InstallDir, "setup-error.txt");
-        private static readonly string TargetPath = Path.Combine(InstallDir, "request-path.txt");
+        internal static readonly string ScriptPath = Path.Combine(InstallDir, "AnemoNetTask.ps1");
+        internal static readonly string ErrorLogPath = Path.Combine(InstallDir, "setup-error.txt");
+        internal static readonly string TargetPath = Path.Combine(InstallDir, "request-path.txt");
 
         private static readonly string DataDir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Anemo.Widget", "netaction");
@@ -67,7 +65,7 @@ namespace Anemo.Widget
                 var payload = ReadResource(ScriptResource);
                 if (!IsInstalled(payload))
                 {
-                    var install = Install(payload);
+                    var install = Install();
                     if (install != null) return install.Value;
                 }
 
@@ -108,57 +106,26 @@ namespace Anemo.Widget
         }
 
         // Returns null on success, otherwise the result to hand back to the caller.
-        private static ElevatedResult? Install(byte[] payload)
+        //
+        // The one-time install re-launches this same exe elevated (one UAC prompt) with
+        // NetTaskInstaller.Flag; App.OnStartup hands off to NetTaskInstaller before any UI.
+        // Nothing is staged on disk and no script text is decoded or evaluated, so there is
+        // nothing for antivirus to lock or flag, and the elevated side writes only into the
+        // admin-only install directory.
+        private static ElevatedResult? Install()
         {
-            // The elevated side runs only what matches this hash: the installer text sits in a
-            // user-writable file until UAC is accepted, so it's verified in memory first and
-            // the verified bytes are what get executed - there's no window to swap it.
-            var installer = new StringBuilder()
-                .AppendLine($"$PayloadB64 = {PsQuote(Convert.ToBase64String(payload))}")
-                .AppendLine($"$ScriptPath = {PsQuote(ScriptPath)}")
-                .AppendLine($"$TargetPath = {PsQuote(TargetPath)}")
-                .AppendLine($"$TaskName = {PsQuote(TaskName)}")
-                .AppendLine($"$TaskUser = {PsQuote(System.Security.Principal.WindowsIdentity.GetCurrent().Name)}")
-                .AppendLine($"$RequestFile = {PsQuote(RequestPath)}")
-                .AppendLine(Encoding.UTF8.GetString(ReadResource(InstallerResource)))
-                .ToString();
-            var installerBytes = new UTF8Encoding(false).GetBytes(installer);
-            var hash = Convert.ToHexString(SHA256.HashData(installerBytes));
-
-            var stagedPath = Path.Combine(DataDir, $"install-{Guid.NewGuid():N}.ps1");
-            File.WriteAllBytes(stagedPath, installerBytes);
+            var exe = Environment.ProcessPath;
+            var sid = System.Security.Principal.WindowsIdentity.GetCurrent().User?.Value;
+            if (string.IsNullOrEmpty(exe) || string.IsNullOrEmpty(sid))
+                return ElevatedResult.Fail("Couldn't determine the widget's path or user for setup");
 
             try
             {
-                // Everything runs under -ErrorActionPreference Stop: a failed read must not
-                // fall through to a null hash that looks like a tampered file. Each failure
-                // mode gets its own exit code (9 hash mismatch, 10 couldn't read/hash the
-                // staged file (after retries), 11 the installer itself threw), and the error text goes to an
-                // admin-only file so the widget can show the real cause.
-                var errFile = PsQuote(ErrorLogPath);
-                var bootstrap =
-                    "$ErrorActionPreference='Stop';" +
-                    $"$e={errFile};" +
-                    "function Fail($c,$m){try{New-Item -ItemType Directory -Force -Path (Split-Path -Parent $e)|Out-Null;[IO.File]::WriteAllText($e,[string]$m)}catch{};exit $c};" +
-                    "try{Remove-Item -LiteralPath $e -Force -ErrorAction SilentlyContinue}catch{};" +
-                    "try{" +
-                    // Open with full sharing and retry: antivirus often holds a freshly written
-                    // file for a moment, which makes a plain ReadAllBytes fail with "in use".
-                    "$b=$null;" +
-                    $"$p={PsQuote(stagedPath)};" +
-                    "for($i=0;$i -lt 20 -and $null -eq $b;$i++){try{" +
-                    "$fs=New-Object IO.FileStream($p,[IO.FileMode]::Open,[IO.FileAccess]::Read,[IO.FileShare]'ReadWrite,Delete');" +
-                    "try{$ms=New-Object IO.MemoryStream;$fs.CopyTo($ms);$b=$ms.ToArray()}finally{$fs.Dispose()}" +
-                    "}catch{if($i -ge 19){throw};Start-Sleep -Milliseconds 250}};" +
-                    "$h=[BitConverter]::ToString([Security.Cryptography.SHA256]::Create().ComputeHash($b)).Replace('-','')" +
-                    "}catch{Fail 10 ($_|Out-String)};" +
-                    $"if($h -ne '{hash}'){{Fail 9 'The staged installer did not match its expected SHA-256.'}};" +
-                    "try{Invoke-Expression([Text.Encoding]::UTF8.GetString($b))}catch{Fail 11 ($_|Out-String)}";
-
                 var psi = new ProcessStartInfo
                 {
-                    FileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "WindowsPowerShell", "v1.0", "powershell.exe"),
-                    Arguments = "-NoProfile -NonInteractive -EncodedCommand " + Convert.ToBase64String(Encoding.Unicode.GetBytes(bootstrap)),
+                    FileName = exe,
+                    Arguments = $"{NetTaskInstaller.Flag} --sid {sid} --request \"{RequestPath}\"",
+                    WorkingDirectory = AppContext.BaseDirectory,
                     UseShellExecute = true,
                     Verb = "runas",
                     WindowStyle = ProcessWindowStyle.Hidden
@@ -173,10 +140,6 @@ namespace Anemo.Widget
             {
                 // ERROR_CANCELLED: the UAC prompt was declined
                 return ElevatedResult.UserCancelled;
-            }
-            finally
-            {
-                try { File.Delete(stagedPath); } catch { /* best effort */ }
             }
         }
 
@@ -269,7 +232,7 @@ namespace Anemo.Widget
             }
         }
 
-        private static byte[] ReadResource(string name)
+        internal static byte[] ReadResource(string name)
         {
             using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(name)
                 ?? throw new InvalidOperationException($"Missing embedded resource {name}");
@@ -278,9 +241,7 @@ namespace Anemo.Widget
             return ms.ToArray();
         }
 
-        private static string PsQuote(string value) => "'" + value.Replace("'", "''") + "'";
-
-        private static (int ExitCode, string Output) Exec(string fileName, string arguments)
+        internal static (int ExitCode, string Output) Exec(string fileName, string arguments)
         {
             var psi = new ProcessStartInfo
             {
