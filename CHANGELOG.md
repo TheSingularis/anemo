@@ -8,6 +8,16 @@ Dates are release dates, in UTC.
 
 > Shipped as **NetworkWidget** prior to 1.3.0 - see [Renamed](#renamed) below.
 
+### 1.3.7 - 2026-11-12
+
+#### Fixed
+- The one-time elevated setup for Release & Renew and Set Static IP no longer fails with
+  "The process cannot access the file ... because it is being used by another process".
+  Antivirus scanning the freshly written installer could hold it briefly; the setup now
+  opens it with shared access and retries for a few seconds.
+- Long error messages under the Release & Renew button now wrap instead of running off the
+  edge of the widget.
+
 ### 1.3.6 - 2026-11-12
 
 #### Fixed
