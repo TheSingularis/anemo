@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The widget's elevated network-action helper. The widget's one-time setup copies this exe
+       into Program Files and registers a HIGHEST-privilege scheduled task that runs it (see
+       NetTaskInstaller.cs / ElevatedTaskRunner.cs at the repo root).
+
+       Deliberately its own tiny non-WPF project: as a plain self-contained single-file exe it
+       has no native libraries to extract to %TEMP% at startup, so nothing user-writable is ever
+       loaded into the elevated process. WinExe (GUI subsystem) with no window means nothing
+       flashes on screen when the task runs. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <AssemblyName>Anemo.NetTask</AssemblyName>
+    <RootNamespace>Anemo.NetTask</RootNamespace>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <PublishTrimmed>true</PublishTrimmed>
+    <Company>Jordan</Company>
+    <Product>Anemo Widget network helper</Product>
+  </PropertyGroup>
+
+</Project>

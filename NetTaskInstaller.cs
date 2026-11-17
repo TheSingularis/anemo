@@ -9,19 +9,23 @@ namespace Anemo.Widget
     // The elevated half of ElevatedTaskRunner's one-time setup. The widget re-launches its own
     // exe with Flag (UAC prompt) and App.OnStartup calls Run before any UI exists.
     //
-    // It copies the embedded AnemoNetTask.ps1 into the admin-only install directory and
-    // registers an on-demand (trigger-less) HIGHEST-privilege Scheduled Task that runs exactly
-    // that script, for the widget's own user (passed as a SID, because the elevated identity can
+    // It copies the Anemo.NetTask.exe helper that ships next to the widget into the admin-only
+    // install directory and registers an on-demand (trigger-less) HIGHEST-privilege Scheduled
+    // Task that runs exactly that copy, for the widget's own user (passed as a SID, because the elevated identity can
     // be a different admin account when UAC asks for credentials). It also removes the older
-    // per-action tasks that ran a user-writable .bat out of %TEMP%.
+    // per-action tasks that ran a user-writable .bat out of %TEMP%, and the PowerShell
+    // script that 1.3.5-1.3.8 installed (it flashed a console window on every click).
     //
     // Everything it writes lives under Program Files, and its two inputs are validated, so a
     // hostile argument can't redirect it. Failures write a message to setup-error.txt in the
     // install directory (admin-only, so it can't be forged) and return a non-zero exit code:
-    //   20 bad arguments, 21 couldn't install the script, 22 couldn't register the task.
+    //   20 bad arguments, 21 couldn't install the helper exe, 22 couldn't register the task.
     internal static class NetTaskInstaller
     {
         public const string Flag = "--install-nettask";
+
+        // Must match NetAction.Flag in Anemo.NetTask.
+        private const string HelperFlag = "--net-action";
 
         private static readonly string[] LegacyTasks = { "Anemo_ReleaseRenew", "Anemo_SetStaticIp" };
 
@@ -42,12 +46,15 @@ namespace Anemo.Widget
 
             try
             {
+                var source = Path.Combine(AppContext.BaseDirectory, ElevatedTaskRunner.HelperFileName);
+                if (!File.Exists(source)) throw new FileNotFoundException($"{ElevatedTaskRunner.HelperFileName} is missing next to the widget");
                 Directory.CreateDirectory(ElevatedTaskRunner.InstallDir);
-                File.WriteAllBytes(ElevatedTaskRunner.ScriptPath, ElevatedTaskRunner.ReadResource(ElevatedTaskRunner.ScriptResource));
+                File.Copy(source, ElevatedTaskRunner.HelperPath, overwrite: true);
+                try { File.Delete(Path.Combine(ElevatedTaskRunner.InstallDir, "AnemoNetTask.ps1")); } catch { /* best effort */ }
             }
             catch (Exception ex)
             {
-                return Fail(21, "Couldn't install the task script: " + ex.Message);
+                return Fail(21, "Couldn't install the helper: " + ex.Message);
             }
 
             foreach (var legacy in LegacyTasks)
@@ -63,6 +70,8 @@ namespace Anemo.Widget
                 // Records which request file the task was registered for, so the widget can tell
                 // when it needs re-registering (e.g. a different user profile).
                 File.WriteAllText(ElevatedTaskRunner.TargetPath, requestPath);
+                // Which widget build the helper copy came from, so an update re-installs it.
+                File.WriteAllText(ElevatedTaskRunner.BuildIdPath, ElevatedTaskRunner.BuildId);
                 return 0;
             }
             catch (Exception ex)
@@ -77,10 +86,7 @@ namespace Anemo.Widget
 
         private static string BuildTaskXml(string sid, string requestPath)
         {
-            var powershell = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System),
-                "WindowsPowerShell", "v1.0", "powershell.exe");
-            var arguments = "-NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File \"" +
-                ElevatedTaskRunner.ScriptPath + "\" -RequestFile \"" + requestPath + "\"";
+            var arguments = HelperFlag + " \"" + requestPath + "\"";
 
             return $@"<?xml version=""1.0"" encoding=""UTF-16""?>
 <Task version=""1.2"" xmlns=""http://schemas.microsoft.com/windows/2004/02/mit/task"">
@@ -102,7 +108,7 @@ namespace Anemo.Widget
   </Settings>
   <Actions Context=""Author"">
     <Exec>
-      <Command>{SecurityElement.Escape(powershell)}</Command>
+      <Command>{SecurityElement.Escape(ElevatedTaskRunner.HelperPath)}</Command>
       <Arguments>{SecurityElement.Escape(arguments)}</Arguments>
     </Exec>
   </Actions>
