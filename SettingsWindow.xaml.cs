@@ -54,8 +54,8 @@ namespace Anemo.Widget
         {
             if (!BugReport.Open("Anemo Widget", BugReport.CurrentVersion(), ElevatedTaskRunner.ReadSetupErrorForReport()))
             {
-                MessageBox.Show($"Couldn't open your browser. You can report it at {BugReport.NewIssueUrl}",
-                    "Report a bug", MessageBoxButton.OK, MessageBoxImage.Information);
+                System.Windows.MessageBox.Show($"Couldn't open your browser. You can report it at {BugReport.NewIssueUrl}",
+                    "Report a bug", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
             }
         }
 
