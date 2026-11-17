@@ -47,6 +47,18 @@ namespace Anemo.Widget
             }
         }
 
+        private void btnReportBug_Click(object sender, RoutedEventArgs e) => ReportBug();
+
+        // Opens a prefilled GitHub issue in the browser; the user reviews and submits it there.
+        internal static void ReportBug()
+        {
+            if (!BugReport.Open("Anemo Widget", BugReport.CurrentVersion(), ElevatedTaskRunner.ReadSetupErrorForReport()))
+            {
+                MessageBox.Show($"Couldn't open your browser. You can report it at {BugReport.NewIssueUrl}",
+                    "Report a bug", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
         private void btnClose_Click(object sender, RoutedEventArgs e)
         {
             Close();

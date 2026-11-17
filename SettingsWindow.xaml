@@ -106,6 +106,10 @@
 
                 <Separator Margin="0,12" Background="#3A3A3A"/>
 
+                <Button x:Name="btnReportBug" Content="Report a bug..." Click="btnReportBug_Click"
+                        Foreground="#8FB8F5" Background="Transparent" BorderThickness="0" Cursor="Hand"
+                        FontSize="11" HorizontalAlignment="Center" Margin="0,0,0,6"/>
+
                 <TextBlock x:Name="txtVersion" Text="Version -" Foreground="#666666" FontSize="10"
                            HorizontalAlignment="Center"/>
             </StackPanel>

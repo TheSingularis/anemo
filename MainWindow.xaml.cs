@@ -150,6 +150,7 @@ namespace Anemo.Widget
             menu.Items.Add(new WinForms.ToolStripSeparator());
             menu.Items.Add("Settings...", null, (_, _) => OpenSettings());
             menu.Items.Add("Check for Updates", null, (_, _) => CheckForUpdatesWithProgress());
+            menu.Items.Add("Report a Bug...", null, (_, _) => SettingsWindow.ReportBug());
             menu.Items.Add(new WinForms.ToolStripSeparator());
             menu.Items.Add("Exit", null, (_, _) => ExitApp());
 
