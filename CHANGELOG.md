@@ -8,6 +8,19 @@ Dates are release dates, in UTC.
 
 > Shipped as **NetworkWidget** prior to 1.3.0 - see [Renamed](#renamed) below.
 
+### 1.3.9 - 2026-11-17
+
+#### Added
+- "Report a bug" in Settings and the tray menu opens a new GitHub issue in your browser with
+  the widget version, OS and any elevated-setup error filled in. Nothing is sent until you
+  review it and press Submit on GitHub.
+
+#### Changed
+- Release & Renew, Set Static IP and Restore DHCP no longer flash a PowerShell window. The
+  elevated task now runs a small dedicated helper (`Anemo.NetTask.exe`, shipped with the widget
+  and copied into Program Files during setup) instead of a PowerShell script, so nothing appears
+  on screen. The first use after updating shows one UAC prompt to install the helper.
+
 ### 1.3.8 - 2026-11-12
 
 #### Changed

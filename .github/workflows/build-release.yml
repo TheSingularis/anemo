@@ -39,12 +39,22 @@ jobs:
           -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
           -o publish-widget
 
+      # The widget's elevated network-action helper ships next to Anemo.Widget.exe; the
+      # widget's one-time setup copies it into Program Files (see NetTaskInstaller.cs).
+      - name: Publish widget network helper (sanity build)
+        if: github.ref == 'refs/heads/dev'
+        run: >
+          dotnet publish Anemo.NetTask/Anemo.NetTask.csproj -c Release -r win-x64 --self-contained true
+          -p:PublishSingleFile=true -o publish-widget
+
       - name: Upload widget build artifact
         if: github.ref == 'refs/heads/dev'
         uses: actions/upload-artifact@v4
         with:
           name: Anemo.Widget-win-x64
-          path: publish-widget/Anemo.Widget.exe
+          path: |
+            publish-widget/Anemo.Widget.exe
+            publish-widget/Anemo.NetTask.exe
           if-no-files-found: error
           retention-days: 7
 
@@ -103,6 +113,12 @@ jobs:
           dotnet publish ${{ steps.target.outputs.csproj }} -c Release -r win-x64 --self-contained true
           -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
           -o publish
+
+      - name: Publish widget network helper for release
+        if: startsWith(github.ref, 'refs/tags/widget-v')
+        run: >
+          dotnet publish Anemo.NetTask/Anemo.NetTask.csproj -c Release -r win-x64 --self-contained true
+          -p:PublishSingleFile=true -o publish
 
       - name: Remove debug symbols before packaging
         if: startsWith(github.ref, 'refs/tags/')

@@ -486,6 +486,14 @@ namespace Anemo.Scanner
 
         private bool _checkingForUpdates;
 
+        private void btnReportBug_Click(object sender, RoutedEventArgs e)
+        {
+            if (!BugReport.Open("Anemo Scanner", BugReport.CurrentVersion()))
+            {
+                txtUpdateStatus.Text = $"Couldn't open your browser - report at {BugReport.NewIssueUrl}";
+            }
+        }
+
         private async void btnCheckForUpdates_Click(object sender, RoutedEventArgs e)
         {
             if (_checkingForUpdates) return;

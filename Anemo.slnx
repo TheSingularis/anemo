@@ -2,5 +2,6 @@
   <Project Path="Anemo.Scanner/Anemo.Scanner.csproj" />
   <Project Path="Anemo.Core/Anemo.Core.csproj" />
   <Project Path="Anemo.Core.Tests/Anemo.Core.Tests.csproj" />
+  <Project Path="Anemo.NetTask/Anemo.NetTask.csproj" />
   <Project Path="Anemo.Widget.csproj" />
 </Solution>

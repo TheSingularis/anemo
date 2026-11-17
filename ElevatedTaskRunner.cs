@@ -2,7 +2,6 @@ using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -29,22 +28,26 @@ namespace Anemo.Widget
     // one pre-registered, HIGHEST-privilege Scheduled Task, so only the one-time install
     // prompts for UAC - not every click.
     //
-    // What the elevated task runs is a fixed PowerShell script (Scripts/AnemoNetTask.ps1)
-    // installed under Program Files, which unprivileged processes can't modify. The only
-    // thing that varies per click is a small JSON request in the user's profile; the script
-    // treats it as untrusted and validates every field (see the script header). Nothing the
+    // What the elevated task runs is a copy of the Anemo.NetTask helper installed under Program
+    // Files (see NetTaskInstaller), which unprivileged processes can't modify. The only
+    // thing that varies per click is a small JSON request in the user's profile; NetAction
+    // treats it as untrusted and validates every field. Nothing the
     // user can write is ever executed.
     internal static class ElevatedTaskRunner
     {
         internal const string TaskName = "Anemo_ElevatedNetworkAction";
-        internal const string ScriptResource = "Anemo.Widget.Scripts.AnemoNetTask.ps1";
 
         // SCHED_S_TASK_RUNNING - what schtasks reports as "Last Result" while a run is in flight.
         private const int TaskRunningResult = 267009;
 
         internal static readonly string InstallDir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Anemo", "NetTask");
-        internal static readonly string ScriptPath = Path.Combine(InstallDir, "AnemoNetTask.ps1");
+        internal const string HelperFileName = "Anemo.NetTask.exe";
+        internal static readonly string HelperPath = Path.Combine(InstallDir, HelperFileName);
+        internal static readonly string BuildIdPath = Path.Combine(InstallDir, "build-id.txt");
+
+        // Unique per compiled build (the module's MVID), so any widget update re-installs the helper.
+        internal static readonly string BuildId = typeof(ElevatedTaskRunner).Assembly.ManifestModule.ModuleVersionId.ToString();
         internal static readonly string ErrorLogPath = Path.Combine(InstallDir, "setup-error.txt");
         internal static readonly string TargetPath = Path.Combine(InstallDir, "request-path.txt");
 
@@ -62,8 +65,7 @@ namespace Anemo.Widget
                 Directory.CreateDirectory(DataDir);
                 CleanUpLegacyTempFiles();
 
-                var payload = ReadResource(ScriptResource);
-                if (!IsInstalled(payload))
+                if (!IsInstalled())
                 {
                     var install = Install();
                     if (install != null) return install.Value;
@@ -88,15 +90,15 @@ namespace Anemo.Widget
             }
         }
 
-        // Installed = the script on disk is byte-identical to the one this build ships (so an
-        // app update re-installs the new script - one more UAC prompt), the request path it
-        // was registered for is still ours, and the task exists.
-        private static bool IsInstalled(byte[] payload)
+        // Installed = the helper copy came from this exact build (so an app update re-installs
+        // it - one more UAC prompt), the request path it was registered for is still ours, and
+        // the task exists.
+        private static bool IsInstalled()
         {
             try
             {
-                if (!File.Exists(ScriptPath) || !File.Exists(TargetPath)) return false;
-                if (!File.ReadAllBytes(ScriptPath).AsSpan().SequenceEqual(payload)) return false;
+                if (!File.Exists(HelperPath) || !File.Exists(TargetPath) || !File.Exists(BuildIdPath)) return false;
+                if (File.ReadAllText(BuildIdPath) != BuildId) return false;
                 if (File.ReadAllText(TargetPath) != RequestPath) return false;
             }
             catch (IOException) { return false; }
@@ -156,6 +158,13 @@ namespace Anemo.Widget
             catch { return ""; }
         }
 
+        // Raw setup-error text (if any), for prefilling a bug report.
+        public static string? ReadSetupErrorForReport()
+        {
+            try { return File.Exists(ErrorLogPath) ? File.ReadAllText(ErrorLogPath) : null; }
+            catch { return null; }
+        }
+
         private static ElevatedResult RunTask()
         {
             var before = QueryTask();
@@ -177,7 +186,7 @@ namespace Anemo.Widget
             return ElevatedResult.Fail("Timed out waiting for the elevated task");
         }
 
-        // Exit codes are defined in AnemoNetTask.ps1.
+        // Exit codes are defined in Anemo.NetTask/NetAction.cs.
         private static ElevatedResult Interpret(int result) => result switch
         {
             0 => ElevatedResult.Ok,
@@ -230,15 +239,6 @@ namespace Anemo.Widget
             {
                 try { File.Delete(Path.Combine(Path.GetTempPath(), name)); } catch { /* best effort */ }
             }
-        }
-
-        internal static byte[] ReadResource(string name)
-        {
-            using var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(name)
-                ?? throw new InvalidOperationException($"Missing embedded resource {name}");
-            using var ms = new MemoryStream();
-            stream.CopyTo(ms);
-            return ms.ToArray();
         }
 
         internal static (int ExitCode, string Output) Exec(string fileName, string arguments)
