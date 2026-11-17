@@ -10,6 +10,11 @@ Dates are release dates, in UTC.
 
 ### 1.3.9 - 2026-11-17
 
+#### Added
+- "Report a bug" in Settings and the tray menu opens a new GitHub issue in your browser with
+  the widget version, OS and any elevated-setup error filled in. Nothing is sent until you
+  review it and press Submit on GitHub.
+
 #### Changed
 - Release & Renew, Set Static IP and Restore DHCP no longer flash a PowerShell window. The
   elevated task now runs a small dedicated helper (`Anemo.NetTask.exe`, shipped with the widget
