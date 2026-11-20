@@ -98,7 +98,7 @@ namespace Anemo.Core
                 if (connResult != ActionResult.Success || conn == null) return none;
 
                 var bssid = conn.Bssid.ToString();
-                var vendor = OuiVendors.Lookup(bssid);
+                var vendor = LookupVendorCached(bssid);
                 var name = ApNameReader.TryRead(iface.Id, conn.Bssid.ToBytes());
                 var identity = none with
                 {
@@ -124,6 +124,21 @@ namespace Anemo.Core
             {
                 return none;
             }
+        }
+
+        // GetCurrent runs every second while the widget is open, but the connected BSSID
+        // only changes on a roam, so the vendor is looked up once per BSSID.
+        private static string? _vendorBssid;
+        private static string _vendor = "Unknown";
+
+        private static string LookupVendorCached(string bssid)
+        {
+            if (!string.Equals(bssid, _vendorBssid, StringComparison.OrdinalIgnoreCase))
+            {
+                _vendor = OuiVendors.LookupSingle(bssid);
+                _vendorBssid = bssid;
+            }
+            return _vendor;
         }
 
         // For the Wi-Fi Analyzer: every nearby access point, not just the one currently
