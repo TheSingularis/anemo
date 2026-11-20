@@ -492,11 +492,11 @@ namespace Anemo.Widget
             int generation = _connectionGeneration;
             var sourceIp = _currentIpv4;
 
-            var gatewayTask = Connectivity.PingAsync(_currentGatewayAddress);
-            var internetTask = Connectivity.PingAsync("1.1.1.1");
-            // Looked up through the adapter being shown, so a second connection (e.g. Wi-Fi
-            // still up next to a just-plugged cable) can't supply the answer. No usable
-            // address on this adapter means no public IP through it either.
+            // All three go out through the adapter being shown, so a second connection (e.g.
+            // Wi-Fi still up next to a just-plugged cable) can't supply the answer. No usable
+            // address on this adapter means nothing can be reached through it either.
+            var gatewayTask = Connectivity.PingFromAsync(sourceIp, _currentGatewayAddress);
+            var internetTask = Connectivity.PingFromAsync(sourceIp, "1.1.1.1");
             var publicIpTask = sourceIp == null
                 ? Task.FromResult("-")
                 : Connectivity.GetPublicIpAsync(sourceIp, TimeSpan.FromSeconds(5));

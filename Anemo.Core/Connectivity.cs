@@ -25,6 +25,73 @@ namespace Anemo.Core
             }
         }
 
+        // Pings out through one specific adapter, by sending from that adapter's own IPv4
+        // address. Plain System.Net.NetworkInformation.Ping can't choose a source address, so
+        // with two connections up (say Wi-Fi plus a cable whose port has no internet) it
+        // would report whichever one Windows happens to route through, not the adapter being
+        // looked at. Uses the Windows ICMP API (IcmpSendEcho2Ex), which can.
+        public static Task<string> PingFromAsync(IPAddress? source, string? host, int timeoutMs = 1500)
+        {
+            if (source == null || string.IsNullOrEmpty(host)) return Task.FromResult("-");
+            if (!IPAddress.TryParse(host, out var destination)
+                || destination.AddressFamily != AddressFamily.InterNetwork
+                || source.AddressFamily != AddressFamily.InterNetwork)
+            {
+                return PingAsync(host, timeoutMs);
+            }
+
+            return Task.Run(() => IcmpPing(source, destination, timeoutMs));
+        }
+
+        internal static string IcmpPing(IPAddress source, IPAddress destination, int timeoutMs)
+        {
+            var handle = IcmpCreateFile();
+            if (handle == IntPtr.Zero || handle == new IntPtr(-1)) return "-";
+
+            var payload = new byte[32];
+            // Big enough for the reply header (40 bytes on 64-bit), the echoed payload, an
+            // ICMP error message and IO_STATUS_BLOCK, per the IcmpSendEcho2Ex docs.
+            const int replySize = 256;
+            var reply = System.Runtime.InteropServices.Marshal.AllocHGlobal(replySize);
+            try
+            {
+                uint count = IcmpSendEcho2Ex(handle, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero,
+                    ToIpAddr(source), ToIpAddr(destination),
+                    payload, (ushort)payload.Length, IntPtr.Zero, reply, replySize, (uint)timeoutMs);
+                if (count == 0) return "unreachable";
+
+                // ICMP_ECHO_REPLY: ULONG Address; ULONG Status; ULONG RoundTripTime; ...
+                uint status = (uint)System.Runtime.InteropServices.Marshal.ReadInt32(reply, 4);
+                uint rtt = (uint)System.Runtime.InteropServices.Marshal.ReadInt32(reply, 8);
+                return status == 0 ? $"{rtt} ms" : "unreachable";
+            }
+            catch
+            {
+                return "-";
+            }
+            finally
+            {
+                System.Runtime.InteropServices.Marshal.FreeHGlobal(reply);
+                IcmpCloseHandle(handle);
+            }
+        }
+
+        // IPAddr is the address's four bytes in network order, read as a native uint.
+        private static uint ToIpAddr(IPAddress address) => BitConverter.ToUInt32(address.GetAddressBytes(), 0);
+
+        [System.Runtime.InteropServices.DllImport("iphlpapi.dll", SetLastError = true)]
+        private static extern IntPtr IcmpCreateFile();
+
+        [System.Runtime.InteropServices.DllImport("iphlpapi.dll", SetLastError = true)]
+        private static extern bool IcmpCloseHandle(IntPtr handle);
+
+        [System.Runtime.InteropServices.DllImport("iphlpapi.dll", SetLastError = true)]
+        private static extern uint IcmpSendEcho2Ex(
+            IntPtr icmpHandle, IntPtr evt, IntPtr apcRoutine, IntPtr apcContext,
+            uint sourceAddress, uint destinationAddress,
+            byte[] requestData, ushort requestSize, IntPtr requestOptions,
+            IntPtr replyBuffer, uint replySize, uint timeout);
+
         public static async Task<string> GetPublicIpAsync(HttpClient client)
         {
             try
