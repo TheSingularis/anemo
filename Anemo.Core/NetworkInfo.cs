@@ -12,7 +12,21 @@ namespace Anemo.Core
         int SubnetPrefixLength,
         string? Gateway,
         IReadOnlyList<string> DnsServers,
-        string Mac);
+        string Mac,
+        Ipv4Status Ipv4Status);
+
+    // Where an adapter's IPv4 address stands. Right after a cable is plugged in (or Wi-Fi
+    // associates) the adapter is already "Up" but has no address yet, or only one Windows
+    // is still checking for conflicts, so a UI needs to say "still connecting" rather than
+    // show a blank or an address that can't actually be used.
+    public enum Ipv4Status
+    {
+        // Up, but no IPv4 address yet (DHCP hasn't answered) or only a tentative one.
+        Pending,
+        // 169.254.x.x - Windows gave up on DHCP and picked a link-local address itself.
+        Autoconfigured,
+        Assigned,
+    }
 
     public static class NetworkInfo
     {
@@ -68,7 +82,13 @@ namespace Anemo.Core
         public static AdapterDetails GetAdapterDetails(NetworkInterface nic)
         {
             var props = nic.GetIPProperties();
-            var v4 = props.UnicastAddresses.FirstOrDefault(a => a.Address.AddressFamily == AddressFamily.InterNetwork);
+            // An address still in duplicate-address detection ("Tentative") or found to be a
+            // duplicate can't be used yet, so it's treated as not having one. A routable
+            // address is preferred over a 169.254 one if an adapter happens to have both.
+            var v4 = props.UnicastAddresses
+                .Where(a => a.Address.AddressFamily == AddressFamily.InterNetwork && IsUsable(a))
+                .OrderBy(a => IsLinkLocal(a.Address) ? 1 : 0)
+                .FirstOrDefault();
             var gateway = props.GatewayAddresses.FirstOrDefault(g => g.Address.AddressFamily == AddressFamily.InterNetwork);
             var dnsServers = props.DnsAddresses
                 .Where(d => d.AddressFamily == AddressFamily.InterNetwork)
@@ -81,8 +101,34 @@ namespace Anemo.Core
                 SubnetPrefixLength: v4?.PrefixLength ?? 0,
                 Gateway: gateway?.Address.ToString(),
                 DnsServers: dnsServers,
-                Mac: FormatMac(nic.GetPhysicalAddress().ToString()));
+                Mac: FormatMac(nic.GetPhysicalAddress().ToString()),
+                Ipv4Status: ClassifyIpv4(v4?.Address));
         }
+
+        private static bool IsUsable(UnicastIPAddressInformation address)
+        {
+            try
+            {
+                return address.DuplicateAddressDetectionState
+                    is DuplicateAddressDetectionState.Preferred
+                    or DuplicateAddressDetectionState.Deprecated;
+            }
+            catch (PlatformNotSupportedException)
+            {
+                return true;
+            }
+        }
+
+        public static bool IsLinkLocal(System.Net.IPAddress address)
+        {
+            var b = address.GetAddressBytes();
+            return b.Length == 4 && b[0] == 169 && b[1] == 254;
+        }
+
+        public static Ipv4Status ClassifyIpv4(System.Net.IPAddress? address) =>
+            address == null ? Ipv4Status.Pending
+            : IsLinkLocal(address) ? Ipv4Status.Autoconfigured
+            : Ipv4Status.Assigned;
 
         public static string FormatLinkSpeed(long bitsPerSecond)
         {

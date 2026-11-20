@@ -44,5 +44,17 @@ namespace Anemo.Core.Tests
             // FF:FF:FF is the broadcast address, never an assigned OUI.
             Assert.Equal("Unknown", OuiVendors.Lookup("FF:FF:FF:FF:FF:FF"));
         }
+
+        [Theory]
+        [InlineData("B827EB")]
+        [InlineData("E80AB9")]
+        [InlineData("080030")]
+        [InlineData("0001C8")]
+        [InlineData("000000")]
+        [InlineData("FFFFFF")]
+        public void Scan_MatchesTableLookup(string prefix)
+        {
+            Assert.Equal(OuiVendors.Lookup(prefix), OuiVendors.Scan(prefix));
+        }
     }
 }

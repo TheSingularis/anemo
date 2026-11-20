@@ -18,6 +18,38 @@ namespace Anemo.Core
             return Table.Value.TryGetValue(prefix, out var vendor) ? vendor : "Unknown";
         }
 
+        // For a single lookup (the Wi-Fi access point the widget is connected to), where
+        // keeping the whole ~40k-entry table in memory (roughly 5 MB) for one answer isn't
+        // worth it: the embedded list is scanned once instead. Uses the table if something
+        // else (e.g. a device scan) already loaded it.
+        public static string LookupSingle(string mac)
+        {
+            if (Table.IsValueCreated) return Lookup(mac);
+
+            var prefix = NormalizePrefix(mac);
+            return prefix == null ? "Unknown" : Scan(prefix);
+        }
+
+        // Same answer as the table: a prefix listed more than once resolves to its last entry.
+        internal static string Scan(string prefix)
+        {
+            using var stream = typeof(OuiVendors).Assembly.GetManifestResourceStream("Anemo.Core.oui.csv");
+            if (stream == null) return "Unknown";
+
+            string? match = null;
+            using var reader = new StreamReader(stream);
+            string? line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                if (line.Length > prefix.Length && line[prefix.Length] == ','
+                    && line.StartsWith(prefix, StringComparison.Ordinal))
+                {
+                    match = line[(prefix.Length + 1)..];
+                }
+            }
+            return match ?? "Unknown";
+        }
+
         private static string? NormalizePrefix(string mac)
         {
             var hex = new string(mac.Where(Uri.IsHexDigit).ToArray()).ToUpperInvariant();
