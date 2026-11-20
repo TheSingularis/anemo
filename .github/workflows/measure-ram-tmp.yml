@@ -1,0 +1,73 @@
+name: TEMP measure widget RAM
+
+on:
+  push:
+    branches: [ claude/project-thread-fc3hth ]
+
+jobs:
+  measure:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Run tests
+        run: dotnet test Anemo.Core.Tests/Anemo.Core.Tests.csproj -c Release
+
+      - name: Publish new build
+        run: dotnet publish Anemo.Widget.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o out-new
+
+      - name: Publish baseline (origin/dev)
+        shell: pwsh
+        run: |
+          git worktree add ../baseline origin/dev
+          dotnet publish ../baseline/Anemo.Widget.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o out-base
+
+      - name: Measure
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Continue'
+          $settingsDir = Join-Path $env:APPDATA 'Anemo.Widget'
+          New-Item -ItemType Directory -Force $settingsDir | Out-Null
+          function Sample($p) {
+            $p.Refresh()
+            $priv = $null
+            try {
+              $c = Get-CimInstance Win32_PerfFormattedData_PerfProc_Process -Filter "IDProcess=$($p.Id)"
+              $priv = [math]::Round($c.WorkingSetPrivate/1MB,1)
+            } catch {}
+            [pscustomobject]@{ WS=[math]::Round($p.WorkingSet64/1MB,1); PrivWS=$priv; Commit=[math]::Round($p.PrivateMemorySize64/1MB,1); Threads=$p.Threads.Count; Handles=$p.HandleCount }
+          }
+          function Series($p, $label, $seconds) {
+            $rows = @()
+            for ($i = 0; $i -lt $seconds; $i += 10) { Start-Sleep 10; if ($p.HasExited) { Write-Host "$label EXITED code $($p.ExitCode)"; return }; $rows += Sample $p }
+            $last = $rows[-1]
+            $maxPriv = ($rows | Measure-Object PrivWS -Maximum).Maximum
+            Write-Host ("RESULT {0,-48} TaskMgr(PrivateWS)={1,6} MB  WorkingSet={2,6} MB  Commit={3,6} MB  peakPrivWS={4,6}  threads={5} handles={6}" -f $label, $last.PrivWS, $last.WS, $last.Commit, $maxPriv, $last.Threads, $last.Handles)
+          }
+          function Run($exe, $name, $envs) {
+            foreach ($k in $envs.Keys) { Set-Item "env:$k" $envs[$k] }
+            # Scenario 1: starts minimized to tray, never opened
+            '{"StartMinimized":true,"ExcludedAdapterIds":[]}' | Set-Content (Join-Path $settingsDir 'settings.json')
+            $p = Start-Process $exe -PassThru
+            Series $p "$name / tray-only idle 2min" 120
+            Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue; Start-Sleep 3
+            # Scenario 2: opened, used for 30s, then hidden to tray (WM_CLOSE hides it)
+            '{"StartMinimized":false,"ExcludedAdapterIds":[]}' | Set-Content (Join-Path $settingsDir 'settings.json')
+            $p = Start-Process $exe -PassThru
+            Series $p "$name / open (visible) 30s" 30
+            $p.Refresh(); [void]$p.CloseMainWindow()
+            Series $p "$name / hidden after open, 2min" 120
+            Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue; Start-Sleep 3
+            foreach ($k in $envs.Keys) { Remove-Item "env:$k" -ErrorAction SilentlyContinue }
+          }
+          Run (Resolve-Path out-base\Anemo.Widget.exe) 'baseline (dev)' @{}
+          Run (Resolve-Path out-new\Anemo.Widget.exe) 'this branch' @{}
+          Run (Resolve-Path out-new\Anemo.Widget.exe) 'this branch + gcConcurrent=0' @{ DOTNET_gcConcurrent='0' }
+          Run (Resolve-Path out-new\Anemo.Widget.exe) 'this branch + GCgen0size=4MB' @{ DOTNET_GCgen0size='400000' }
+          Run (Resolve-Path out-new\Anemo.Widget.exe) 'this branch + both' @{ DOTNET_gcConcurrent='0'; DOTNET_GCgen0size='400000' }
+          Run (Resolve-Path out-new\Anemo.Widget.exe) 'this branch + TieredCompilation quick' @{ DOTNET_TieredPGO='0' }
