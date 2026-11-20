@@ -83,5 +83,21 @@ namespace Anemo.Core.Tests
         {
             Assert.Equal(raw, NetworkInfo.FormatMac(raw));
         }
+
+        [Theory]
+        [InlineData("192.168.1.50", Ipv4Status.Assigned)]
+        [InlineData("10.0.0.1", Ipv4Status.Assigned)]
+        [InlineData("169.254.12.34", Ipv4Status.Autoconfigured)]
+        [InlineData("169.253.0.1", Ipv4Status.Assigned)]
+        public void ClassifyIpv4_RecognisesLinkLocal(string ip, Ipv4Status expected)
+        {
+            Assert.Equal(expected, NetworkInfo.ClassifyIpv4(IPAddress.Parse(ip)));
+        }
+
+        [Fact]
+        public void ClassifyIpv4_NoAddressIsPending()
+        {
+            Assert.Equal(Ipv4Status.Pending, NetworkInfo.ClassifyIpv4(null));
+        }
     }
 }
